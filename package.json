@@ -1,0 +1,9 @@
+{
+  "name": "app-idee",
+  "private": true,
+  "description": "Raccoglitore vocale di idee per nuove app",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

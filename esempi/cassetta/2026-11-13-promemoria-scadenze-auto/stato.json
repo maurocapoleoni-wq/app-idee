@@ -1,0 +1,19 @@
+{
+  "id": "2026-11-13-promemoria-scadenze-auto",
+  "titolo": "Promemoria scadenze auto",
+  "stato": "miglioria_in_attesa",
+  "statoPrecedente": null,
+  "versione": 2,
+  "etichette": ["casa"],
+  "migliorie": [
+    {
+      "versione": 2,
+      "slug": "notifiche-7-giorni-prima",
+      "titolo": "Notifiche 7 giorni prima",
+      "creata": "2026-11-16T08:00:00.000Z",
+      "applicata": null
+    }
+  ],
+  "creata": "2026-11-13T11:00:00.000Z",
+  "aggiornata": "2026-11-16T08:00:00.000Z"
+}

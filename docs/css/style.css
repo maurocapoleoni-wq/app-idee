@@ -1,0 +1,129 @@
+/* Stile ripreso dalla prima app: sfondo scuro, grandi pulsanti a "occhio", pillole, schede. */
+:root {
+  --sfondo: #111;
+  --superficie: #222;
+  --superficie-2: #1a1a1a;
+  --testo: #eee;
+  --testo-2: #bbb;
+  --testo-3: #888;
+  --viola: #7f77dd;
+  --viola-chiaro: #afa9ec;
+  --viola-scuro: #3c3489;
+  --verde: #1d9e75;
+  --verde-scuro: #04342c;
+  --arancio: #ba7517;
+  --blu: #378add;
+  --rosso: #e24b4a;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--sfondo);
+  color: var(--testo);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 16px calc(24px + env(safe-area-inset-bottom));
+}
+
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* Barra in alto */
+.barra { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
+.barra h1 { font-size: 18px; font-weight: 500; margin: 0; flex: 1; }
+.icona-btn { background: none; border: none; padding: 8px; color: var(--testo-2); display: inline-flex; }
+.icona-btn svg { width: 24px; height: 24px; }
+
+.indicatore { font-size: 13px; color: var(--testo-2); display: inline-flex; align-items: center; gap: 6px; }
+.indicatore::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--testo-3); }
+.indicatore.ok::before { background: var(--verde); }
+.indicatore.attesa::before { background: var(--arancio); }
+.indicatore.config::before { background: var(--rosso); }
+
+/* Pulsante a occhio */
+.occhio {
+  display: flex; align-items: center; justify-content: center;
+  width: 170px; height: 108px; margin: 12px auto 0;
+  border: none; border-radius: 50%;
+  background: var(--viola);
+  box-shadow: 0 0 28px rgba(127, 119, 221, .55);
+  transition: transform .1s;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.occhio:active, .occhio.ascolta { transform: scale(.96); }
+.occhio.ascolta { box-shadow: 0 0 40px rgba(226, 75, 74, .7); background: var(--rosso); }
+.occhio.piccolo { width: 120px; height: 76px; }
+.anello {
+  display: flex; align-items: center; justify-content: center;
+  width: 68px; height: 68px; border: 5px solid #fff; border-radius: 50%; color: #fff;
+}
+.occhio.piccolo .anello { width: 48px; height: 48px; border-width: 4px; }
+.anello svg { width: 55%; height: 55%; }
+
+.etichetta-occhio { text-align: center; color: var(--viola-chiaro); font-weight: 500; font-size: 20px; margin-top: 12px; }
+.sottotitolo { text-align: center; color: var(--testo-2); margin: 4px 0 16px; }
+.trascrizione { text-align: center; color: var(--testo); min-height: 1.4em; font-style: italic; }
+
+/* Campo + pillole */
+.riga-input { display: flex; gap: 8px; margin-bottom: 16px; }
+.riga-input input {
+  flex: 1; min-width: 0; background: var(--superficie); border: 1px solid #333; border-radius: 999px;
+  padding: 12px 16px; color: var(--testo); font: inherit;
+}
+.pillola { border: none; border-radius: 999px; padding: 10px 18px; font-weight: 600; }
+.pillola.viola { background: var(--viola); color: #fff; }
+.pillola.verde { background: var(--verde); color: var(--verde-scuro); }
+.pillola.grigia { background: #333; color: var(--testo); }
+.pillola:disabled { opacity: .45; cursor: default; }
+
+/* Schede Attive / Archivio / Cestino */
+.schede { display: flex; gap: 8px; margin-bottom: 12px; }
+.schede button {
+  flex: 1; background: none; border: 1px solid #333; border-radius: 999px; padding: 8px; color: var(--testo-2);
+}
+.schede button[aria-selected='true'] { background: var(--viola-scuro); border-color: var(--viola); color: #fff; }
+
+.riga-titolo { display: flex; justify-content: space-between; color: var(--testo-2); margin-bottom: 8px; font-size: 15px; }
+
+/* Lista idee */
+.lista { list-style: none; margin: 0; padding: 0; }
+.scheda-idea {
+  display: flex; gap: 12px; width: 100%; text-align: left;
+  background: var(--superficie); border: none; border-radius: 14px; padding: 10px; margin-bottom: 10px;
+}
+.quadro { width: 72px; height: 72px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
+.quadro svg { width: 30px; height: 30px; }
+.titolo-idea { font-size: 16px; }
+.data-idea { color: var(--testo-3); font-size: 13px; }
+.vuota { color: var(--testo-3); text-align: center; padding: 24px 0; }
+
+.badge { display: inline-block; font-size: 12px; padding: 2px 10px; border-radius: 999px; margin-top: 4px; }
+
+.paginazione { display: flex; justify-content: space-between; margin-top: 4px; }
+
+/* Riquadri generici */
+.riquadro { background: var(--superficie-2); border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
+.riquadro h2 { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+.riquadro p { margin: 4px 0; color: var(--testo-2); }
+.nota { color: var(--testo-3); font-size: 13px; }
+
+/* Impostazioni */
+.campo { display: block; margin-bottom: 14px; }
+.campo span { display: block; color: var(--testo-2); font-size: 14px; margin-bottom: 4px; }
+.campo input {
+  width: 100%; background: var(--superficie); border: 1px solid #333; border-radius: 10px; padding: 10px 12px;
+  color: var(--testo); font: inherit;
+}
+.esito { margin-top: 10px; font-size: 14px; }
+.esito.ok { color: #5dcaa5; }
+.esito.errore { color: #f09595; }
+
+.azioni { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
