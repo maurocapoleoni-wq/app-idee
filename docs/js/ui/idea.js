@@ -1,6 +1,6 @@
 // Pagina di approfondimento di un'idea: scheda, storico delle versioni, migliorie, azioni.
 
-import { STATI, cambiaStato } from '../idee.js';
+import { STATI, cambiaStato, archivia, cestina, ripristina } from '../idee.js';
 import { esc, ICONE } from './dom.js';
 import { badge } from './stile-stati.js';
 import { schedaHtml } from './scheda.js';
@@ -49,8 +49,8 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
       ${dialogo ? schedaHtml(dialogo.scheda) : '<p class="nota">Idea d\'esempio: non ha una scheda.</p>'}
     </div>
 
-    ${dialogo && idea.stato === STATI.PRONTA ? `
-      <div class="azioni"><button class="pillola grigia" id="riapri">Continua la conversazione</button></div>` : ''}
+    ${dialogo && [STATI.IN_DISCUSSIONE, STATI.PRONTA].includes(idea.stato) ? `
+      <div class="azioni"><button class="pillola viola" id="riapri">Continua la conversazione</button></div>` : ''}
 
     <div class="riquadro">
       <h2>Storico</h2>
@@ -63,15 +63,50 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
 
     <div class="azioni">
       <button class="pillola grigia" disabled>Condividi</button>
-      <button class="pillola grigia" disabled>Archivia</button>
-      <button class="pillola grigia" disabled>Sposta nel cestino</button>
+      ${idea.stato === STATI.ARCHIVIATA || idea.stato === STATI.NEL_CESTINO
+        ? `<button class="pillola verde" data-sposta="ripristina">Ripristina</button>` : ''}
+      ${idea.stato !== STATI.ARCHIVIATA ? `<button class="pillola grigia" data-sposta="archivia">${ICONE.scatola} Archivia</button>` : ''}
+      ${idea.stato !== STATI.NEL_CESTINO ? `<button class="pillola grigia" data-sposta="cestina">${ICONE.cestino} Sposta nel cestino</button>` : ''}
     </div>
-    <p class="nota" style="text-align:center">Condividi, archivio e cestino arrivano nei prossimi passi di sviluppo.</p>
+    <p class="nota" style="text-align:center">
+      ${dialogo ? 'Archivio e cestino cambiano solo lo stato: non si perde niente e il progetto sul PC non viene toccato.'
+        : 'Le idee d\'esempio non si possono spostare.'}
+      Condividi arriva nel prossimo passo.
+    </p>
   `;
   radice.querySelector('[data-azione="indietro"]').onclick = () => vai('home');
   radice.querySelector('#riapri')?.addEventListener('click', async () => {
-    await salvaDialogo({ ...dialogo, idea: cambiaStato(dialogo.idea, STATI.IN_DISCUSSIONE) });
+    if (dialogo.idea.stato === STATI.PRONTA) {
+      await salvaDialogo({ ...dialogo, idea: cambiaStato(dialogo.idea, STATI.IN_DISCUSSIONE) });
+    }
     vai('conversazione', { chiave: dialogo.chiave });
+  });
+
+  // Regola 4: archivio, cestino e ripristino cambiano solo stato.json. Nessuna conferma:
+  // si torna sempre indietro (Annulla subito, oppure Ripristina quando si vuole).
+  const MOSSE = {
+    archivia: { fn: archivia, azione: 'Archiviata', testo: 'archiviata' },
+    cestina: { fn: cestina, azione: 'Nel cestino', testo: 'spostata nel cestino' },
+    ripristina: { fn: ripristina, azione: 'Ripristinata', testo: 'ripristinata' },
+  };
+  radice.querySelectorAll('[data-sposta]').forEach((b) => {
+    if (!dialogo) {
+      b.disabled = true;
+      return;
+    }
+    b.onclick = async () => {
+      const mossa = MOSSE[b.dataset.sposta];
+      const prima = dialogo;
+      await salvaDialogo({ ...dialogo, idea: mossa.fn(dialogo.idea) }, { soloStato: true, azione: mossa.azione });
+      stato.avviso = {
+        testo: `«${idea.titolo}» ${mossa.testo}.`,
+        annulla: async () => {
+          await salvaDialogo({ ...prima, idea: { ...prima.idea, aggiornata: new Date().toISOString() } },
+            { soloStato: true, azione: 'Annullato' });
+        },
+      };
+      vai('home');
+    };
   });
   radice.querySelector('#migliora')?.addEventListener('click', () => {
     // Nello stesso tocco: il browser permette di accendere subito il microfono.

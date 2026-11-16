@@ -186,19 +186,23 @@ const AZIONI = {
   [STATI.IN_DISCUSSIONE]: 'Idea in discussione',
   [STATI.PRONTA]: 'Idea pronta',
   [STATI.MIGLIORIA_IN_ATTESA]: 'Nuova miglioria',
+  [STATI.ARCHIVIATA]: 'Archiviata',
+  [STATI.NEL_CESTINO]: 'Nel cestino',
 };
 
 // Un salvataggio da mettere in coda = un commit con tutti i file dell'idea.
 // Senza idea non c'è ancora una cartella nella cassetta.
-export function salvataggioDelDialogo(dialogo) {
+// soloStato: archivio, cestino e ripristino cambiano SOLO stato.json (regola 4).
+export function salvataggioDelDialogo(dialogo, { soloStato = false, azione } = {}) {
   if (!dialogo.idea) return null;
   const { idea } = dialogo;
+  const messaggio = messaggioCommit(idea, azione ?? AZIONI[idea.stato] ?? 'Aggiorna idea');
+  if (soloStato) return { chiave: idea.id, files: fileDiSalvataggio(idea), messaggio };
   const files = fileDiSalvataggio(idea, { scheda: dialogo.scheda, messaggi: dialogo.messaggi });
   for (const m of idea.migliorie) {
     const locale = dialogo.migliorie?.[m.versione];
     // Le migliorie arrivate dalla cassetta hanno già il loro file: non si riscrivono.
     if (locale) files.push({ percorso: percorsoMiglioria(idea.id, m), contenuto: migliorieMd(idea, m, locale.descrizione, locale.messaggi) });
   }
-  const azione = AZIONI[idea.stato] ?? 'Aggiorna idea';
-  return { chiave: idea.id, files, messaggio: messaggioCommit(idea, azione) };
+  return { chiave: idea.id, files, messaggio };
 }

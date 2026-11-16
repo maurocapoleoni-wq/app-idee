@@ -1,6 +1,6 @@
 // Schermata principale: microfono, campo di testo, schede e lista 4 per pagina.
 
-import { SCHEDE, STATI, inScheda, ordinaPerRecenti, pagina } from '../idee.js';
+import { SCHEDE, inScheda, ordinaPerRecenti, pagina } from '../idee.js';
 import { esc, ICONE } from './dom.js';
 import { STILE_STATO, badge } from './stile-stati.js';
 
@@ -96,12 +96,26 @@ export function mostra(radice, { stato, vai }) {
       vai('home');
     };
   });
+  // Ogni idea apre la sua pagina: lì ci sono scheda, "Continua la conversazione", archivio e cestino.
   radice.querySelectorAll('[data-id]').forEach((b) => {
-    b.onclick = () => {
-      // Un'idea ancora in discussione riapre la conversazione; le altre la pagina dell'idea.
-      const dialogo = stato.dialoghi.find((d) => d.idea?.id === b.dataset.id);
-      if (dialogo?.idea.stato === STATI.IN_DISCUSSIONE) vai('conversazione', { chiave: dialogo.chiave });
-      else vai('idea', { id: b.dataset.id });
-    };
+    b.onclick = () => vai('idea', { id: b.dataset.id });
   });
+
+  // Avviso dopo uno spostamento (archivio, cestino, ripristino), con Annulla per qualche secondo.
+  if (stato.avviso) {
+    const { testo, annulla } = stato.avviso;
+    stato.avviso = null;
+    const avviso = document.createElement('div');
+    avviso.className = 'avviso-flottante';
+    avviso.setAttribute('role', 'status');
+    avviso.innerHTML = `<span>${esc(testo)}</span><button class="pillola grigia">Annulla</button>`;
+    radice.querySelector('.schermo-home').append(avviso);
+    const chiudi = setTimeout(() => avviso.remove(), 6000);
+    avviso.querySelector('button').onclick = async () => {
+      clearTimeout(chiudi);
+      avviso.remove();
+      await annulla();
+      vai('home');
+    };
+  }
 }

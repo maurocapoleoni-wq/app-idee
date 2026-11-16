@@ -6,7 +6,7 @@ import {
   iniziaMiglioria, aggiungiMessaggioMiglioria, attendeDomandaMiglioria, normalizzaRispostaMiglioria,
   applicaRispostaMiglioria, salvaMiglioria,
 } from '../docs/js/dialogo.js';
-import { cambiaStato, STATI } from '../docs/js/idee.js';
+import { cambiaStato, archivia, cestina, ripristina, STATI } from '../docs/js/idee.js';
 import { creaArchivio } from '../docs/js/archivio.js';
 import { memoriaInRam } from '../docs/js/coda.js';
 
@@ -178,6 +178,23 @@ test('una miglioria senza risposte di Claude usa le parole dell\'utente', () => 
   d = salvaMiglioria(aggiungiMessaggioMiglioria(d, 'utente', 'aggiungere il tema scuro', ORA), DOPO);
   assert.equal(d.idea.migliorie[0].titolo, 'Aggiungere il tema scuro');
   assert.equal(d.migliorie[2].descrizione, 'aggiungere il tema scuro');
+});
+
+test('archivio, cestino e ripristino scrivono solo stato.json', () => {
+  const d = ideaImpostata();
+  const cestinata = { ...d, idea: cestina(d.idea, DOPO) };
+  const s = salvataggioDelDialogo(cestinata, { soloStato: true });
+  assert.deepEqual(s.files.map((f) => f.percorso), ['2026-11-16-spesa/stato.json']);
+  assert.equal(s.messaggio, 'Nel cestino: Promemoria spesa (v1)');
+  const stato = JSON.parse(s.files[0].contenuto);
+  assert.equal(stato.stato, STATI.NEL_CESTINO);
+  assert.equal(stato.statoPrecedente, STATI.IMPOSTATA);
+
+  assert.equal(salvataggioDelDialogo({ ...d, idea: archivia(d.idea, DOPO) }, { soloStato: true }).messaggio, 'Archiviata: Promemoria spesa (v1)');
+  const ripristinata = { ...cestinata, idea: ripristina(cestinata.idea, DOPO) };
+  const r = salvataggioDelDialogo(ripristinata, { soloStato: true, azione: 'Ripristinata' });
+  assert.equal(r.messaggio, 'Ripristinata: Promemoria spesa (v1)');
+  assert.equal(JSON.parse(r.files[0].contenuto).stato, STATI.IMPOSTATA);
 });
 
 test('le migliorie arrivate dalla cassetta non vengono riscritte', () => {

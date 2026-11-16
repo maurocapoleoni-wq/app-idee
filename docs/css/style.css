@@ -83,6 +83,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pillola.verde { background: var(--verde); color: var(--verde-scuro); }
 .pillola.grigia { background: #333; color: var(--testo); }
 .pillola:disabled { opacity: .45; cursor: default; }
+.pillola svg { width: 16px; height: 16px; vertical-align: -3px; margin-right: 2px; }
+.avviso-flottante {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom));
+  width: min(440px, calc(100% - 32px)); display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: #2b2b2b; border: 1px solid #3a3a3a; border-radius: 12px; padding: 8px 8px 8px 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .5); font-size: 14px; z-index: 10;
+}
 
 /* Schede Attive / Archivio / Cestino */
 .schede { display: flex; gap: 8px; margin-bottom: 12px; }

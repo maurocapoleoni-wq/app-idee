@@ -43,9 +43,9 @@ async function ricaricaIdee() {
 
 // Regola 2: prima il telefono (archivio), poi la coda, poi GitHub.
 // Con { cassetta: false } resta solo sul telefono (es. bozza di una miglioria).
-async function salvaDialogo(dialogo, { cassetta = true } = {}) {
+async function salvaDialogo(dialogo, { cassetta = true, soloStato = false, azione } = {}) {
   await archivio.salva(dialogo);
-  const salvataggio = cassetta ? salvataggioDelDialogo(dialogo) : null;
+  const salvataggio = cassetta ? salvataggioDelDialogo(dialogo, { soloStato, azione }) : null;
   if (salvataggio) await stato.coda.aggiungi(salvataggio);
   await ricaricaIdee();
   aggiornaIndicatore();
