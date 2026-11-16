@@ -9,6 +9,7 @@ import {
 import { cambiaStato, STATI } from '../idee.js';
 import { creaClaude } from '../claude.js';
 import { leggiAdAltaVoce } from '../voce.js';
+import { documentoDaIdea, simili } from '../ricerca.js';
 import { esc, ICONE } from './dom.js';
 import { schedaHtml } from './scheda.js';
 import { collegaDettatura } from './dettatura.js';
@@ -24,6 +25,8 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   let occupato = false;
   let avviso = '';
   let mancantiDaConfermare = null;
+  let similiDaMostrare = null; // possibile doppione: { id, titolo }
+  const avvisati = new Set(); // ogni doppione si segnala una volta sola per conversazione
   let leggiDomande = leggiPreferenzaVoce();
 
   // Il microfono sta sempre fermo in alto; sotto scorrono i messaggi, il più recente
@@ -83,6 +86,15 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
       </div>`;
       $('#continua').onclick = () => { mancantiDaConfermare = null; disegna(); };
       $('#conferma-pronta').onclick = segnaPronta;
+    } else if (similiDaMostrare) {
+      $('#avviso').innerHTML = `<div class="avviso">
+        Somiglia a «${esc(similiDaMostrare.titolo)}», che hai già. Potrebbe essere la stessa idea.
+        <button class="pillola grigia" id="guarda-simile">Guardala</button>
+        <button class="pillola viola" id="ignora-simile">Continua</button>
+      </div>`;
+      // La conversazione è già salvata: si può uscire e tornare senza perdere nulla.
+      $('#guarda-simile').onclick = () => vai('idea', { id: similiDaMostrare.id });
+      $('#ignora-simile').onclick = () => { similiDaMostrare = null; disegna(); };
     } else $('#avviso').innerHTML = avviso
       ? `<div class="avviso">${esc(avviso)}${ripetibile ? ' <button class="pillola grigia" id="riprova">Riprova</button>' : ''}</div>`
       : '';
@@ -100,6 +112,17 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   }
 
   const idEsistenti = () => stato.dialoghi.filter((d) => d.chiave !== dialogo.chiave && d.idea).map((d) => d.idea.id);
+
+  // Confronto con le altre idee, sul telefono e senza costi: serve a non fare due volte la stessa idea.
+  function cercaDoppioni() {
+    if (!dialogo.idea) return;
+    const mio = documentoDaIdea(dialogo.idea, dialogo);
+    const altri = stato.dialoghi.filter((d) => d.idea && d.idea.id !== dialogo.idea.id);
+    const doppione = simili(mio, altri.map((d) => documentoDaIdea(d.idea, d))).find((s) => s.doppione && !avvisati.has(s.id));
+    if (!doppione) return;
+    avvisati.add(doppione.id);
+    similiDaMostrare = { id: doppione.id, titolo: altri.find((d) => d.idea.id === doppione.id).idea.titolo };
+  }
 
   async function salva() {
     try {
@@ -131,6 +154,7 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     }
     dialogo = assicuraIdea(dialogo, { titolo: risposta?.titolo, idEsistenti: idEsistenti() });
     if (risposta) dialogo = applicaRisposta(dialogo, risposta);
+    cercaDoppioni();
     occupato = false;
     await salva();
     disegna();

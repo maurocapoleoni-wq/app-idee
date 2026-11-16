@@ -43,7 +43,10 @@ export function mostra(radice, { stato, vai }) {
     <div class="schermo-home">
     <header class="barra">
       <span id="indicatore" class="indicatore">…</span>
-      <button class="icona-btn" data-azione="impostazioni" aria-label="Impostazioni">${ICONE.ingranaggio}</button>
+      <span class="gruppo-icone">
+        <button class="icona-btn" data-azione="cerca" aria-label="Cerca tra le idee">${ICONE.lente}</button>
+        <button class="icona-btn" data-azione="impostazioni" aria-label="Impostazioni">${ICONE.ingranaggio}</button>
+      </span>
     </header>
 
     <button class="occhio" id="mic" aria-label="Parla: racconta una nuova idea">
@@ -77,6 +80,7 @@ export function mostra(radice, { stato, vai }) {
   `;
 
   radice.querySelector('[data-azione="impostazioni"]').onclick = () => vai('impostazioni');
+  radice.querySelector('[data-azione="cerca"]').onclick = () => vai('ricerca');
   radice.querySelector('#mic').onclick = () => vai('conversazione', { avviaMicrofono: true });
   radice.querySelector('#form-testo').onsubmit = (e) => {
     e.preventDefault();

@@ -2,8 +2,9 @@
 
 import { STATI, cambiaStato, archivia, cestina, ripristina } from '../idee.js';
 import { esc, ICONE } from './dom.js';
-import { badge } from './stile-stati.js';
+import { STILE_STATO, badge } from './stile-stati.js';
 import { schedaHtml } from './scheda.js';
+import { documentoDaIdea, simili } from '../ricerca.js';
 
 function data(isoString) {
   return new Date(isoString).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
@@ -25,6 +26,13 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   // Le idee d'esempio non hanno un dialogo: si guardano ma non si migliorano.
   const migliorabile = dialogo && [STATI.IMPOSTATA, STATI.MIGLIORIA_IN_ATTESA, STATI.ARCHIVIATA].includes(idea.stato);
   const bozzaAperta = dialogo?.bozzaMiglioria?.messaggi.length > 0;
+  // Idee simili: confronto fatto sul telefono, senza Claude e senza costi.
+  const trovate = dialogo
+    ? simili(
+      documentoDaIdea(idea, dialogo),
+      stato.dialoghi.filter((d) => d.idea && d.idea.id !== idea.id).map((d) => documentoDaIdea(d.idea, d)),
+    )
+    : [];
   const storico = [
     ...[...idea.migliorie].reverse().map((m) => ({
       v: m.versione,
@@ -48,6 +56,20 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
       <h2>Scheda · versione 1</h2>
       ${dialogo ? schedaHtml(dialogo.scheda) : '<p class="nota">Idea d\'esempio: non ha una scheda.</p>'}
     </div>
+
+    ${trovate.length ? `
+      <div class="riquadro simili">
+        <h2>Idee simili tra le tue</h2>
+        <ul class="lista">${trovate.map((t) => {
+          const altra = stato.idee.find((i) => i.id === t.id);
+          const s = STILE_STATO[altra.stato];
+          return `<li><button class="scheda-idea" data-simile="${esc(altra.id)}">
+            <span class="quadro" style="background:${s.colore}">${s.icona}</span>
+            <span><span class="titolo-idea">${esc(altra.titolo)}</span><br>
+              <span class="riga-stato">${badge(altra.stato)}${t.doppione ? '<span class="etichetta-doppione">Possibile doppione</span>' : ''}</span></span>
+          </button></li>`;
+        }).join('')}</ul>
+      </div>` : ''}
 
     ${dialogo && [STATI.IN_DISCUSSIONE, STATI.PRONTA].includes(idea.stato) ? `
       <div class="azioni"><button class="pillola viola" id="riapri">Continua la conversazione</button></div>` : ''}
@@ -77,6 +99,9 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     </p>
   `;
   radice.querySelector('[data-azione="indietro"]').onclick = () => vai('home');
+  radice.querySelectorAll('[data-simile]').forEach((b) => {
+    b.onclick = () => vai('idea', { id: b.dataset.simile });
+  });
   radice.querySelector('#ispirazione')?.addEventListener('click', () => vai('ispirazione', { id: idea.id }));
   radice.querySelector('#condividi').onclick = () => {
     if (dialogo) vai('condivisione', { id: idea.id });

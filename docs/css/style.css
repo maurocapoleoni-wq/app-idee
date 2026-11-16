@@ -171,6 +171,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .schermo-home .riga-input { margin: 10px 0 12px; }
 }
 
+/* Cerca e idee simili */
+.gruppo-icone { display: inline-flex; align-items: center; }
+.estratto { display: block; margin-top: 4px; color: var(--testo-2); font-size: 13px; line-height: 1.35; }
+.estratto strong { color: var(--viola-chiaro); font-weight: 500; }
+.simili .scheda-idea { padding: 8px; margin-bottom: 6px; align-items: center; }
+.simili .quadro { width: 44px; height: 44px; }
+.simili .quadro svg { width: 20px; height: 20px; }
+.etichetta-doppione { color: #efb563; font-size: 12px; margin-left: 6px; }
+
 /* Ispirazione: schede video come nella prima app */
 .pillola.rossa { background: var(--rosso); color: #fff; }
 .schede.filtri button { font-size: 13px; padding: 8px 6px; }

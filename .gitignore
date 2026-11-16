@@ -5,3 +5,5 @@ node_modules/
 .DS_Store
 Thumbs.db
 .claude/settings.local.json
+# Documenti personali (Word, appunti): non vanno nel repository pubblico
+documenti/

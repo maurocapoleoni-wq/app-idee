@@ -16,8 +16,9 @@ import * as impostazioni from './ui/impostazioni.js';
 import * as miglioria from './ui/miglioria.js';
 import * as condivisione from './ui/condivisione.js';
 import * as ispirazione from './ui/ispirazione.js';
+import * as ricerca from './ui/ricerca.js';
 
-const SCHERMATE = { home, conversazione, idea, impostazioni, miglioria, condivisione, ispirazione };
+const SCHERMATE = { home, conversazione, idea, impostazioni, miglioria, condivisione, ispirazione, ricerca };
 
 const stato = {
   config: leggiConfig(),
