@@ -34,26 +34,26 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
       </header>
       <p class="nota">Diventerà la versione ${dialogo.idea.versione + 1}.</p>
 
-      <ul class="chat" id="chat" aria-live="polite"></ul>
-
-      <div class="comandi">
-        <div id="avviso"></div>
-        <details class="scheda-ripiegabile">
-          <summary id="sommario-riepilogo"></summary>
-          <div id="riepilogo"></div>
-        </details>
-
+      <div class="comandi-alto">
         <div class="riga-mic">
           <button class="occhio piccolo" id="mic" aria-label="Racconta la miglioria a voce"><span class="anello">${ICONE.microfono}</span></button>
           <div class="etichetta-mic" id="etichetta-mic"></div>
         </div>
-
         <form class="risposta" id="form-risposta">
           <textarea id="campo" rows="1" placeholder="…oppure scrivi qui" aria-label="La tua risposta"
             autocapitalize="sentences" spellcheck="true"></textarea>
           <button class="pillola viola" type="submit" id="invia">Invia</button>
         </form>
+        <div id="avviso"></div>
+      </div>
 
+      <ul class="chat" id="chat" aria-live="polite"></ul>
+
+      <div class="comandi-basso">
+        <details class="scheda-ripiegabile">
+          <summary id="sommario-riepilogo"></summary>
+          <div id="riepilogo"></div>
+        </details>
         <div class="azioni">
           <button class="pillola grigia" data-azione="indietro">Riprendi dopo</button>
           <button class="pillola verde" id="salva">Salva miglioria</button>
@@ -68,7 +68,7 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     const voci = [`<li class="app">${esc(BENVENUTO)}</li>`];
     for (const m of b.messaggi) voci.push(`<li class="${m.ruolo}">${esc(m.testo)}</li>`);
     if (occupato) voci.push('<li class="app pensa">Sto pensando…</li>');
-    $('#chat').innerHTML = voci.join('');
+    $('#chat').innerHTML = voci.reverse().join(''); // il più recente in cima, sotto il microfono
     const ripetibile = !occupato && attendeDomandaMiglioria(dialogo);
     $('#avviso').innerHTML = avviso
       ? `<div class="avviso">${esc(avviso)}${ripetibile ? ' <button class="pillola grigia" id="riprova">Riprova</button>' : ''}</div>`
@@ -82,8 +82,7 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     $('#salva').disabled = occupato || !haTesto;
     $('#salva').classList.toggle('evidenzia', b.completa);
     $('#invia').disabled = occupato;
-    const chat = $('#chat');
-    chat.scrollTop = chat.scrollHeight; // scorre solo l'area dei messaggi, non la pagina
+    $('#chat').scrollTop = 0; // si torna all'ultimo messaggio, la pagina resta ferma
   }
 
   async function salvaBozza() {

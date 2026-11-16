@@ -26,8 +26,8 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   let mancantiDaConfermare = null;
   let leggiDomande = leggiPreferenzaVoce();
 
-  // Impaginazione da chat: la pagina non scorre, scorre solo l'area dei messaggi.
-  // Microfono e campo restano fermi in basso, sotto il pollice.
+  // Il microfono sta sempre fermo in alto; sotto scorrono i messaggi, il più recente
+  // subito sotto il microfono. La pagina non scorre mai.
   radice.innerHTML = `
     <div class="schermo-chat">
       <header class="barra">
@@ -37,26 +37,26 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
         <span id="indicatore" class="indicatore">…</span>
       </header>
 
-      <ul class="chat" id="chat" aria-live="polite"></ul>
-
-      <div class="comandi">
-        <div id="avviso"></div>
-        <details class="scheda-ripiegabile">
-          <summary id="sommario-scheda"></summary>
-          <div id="scheda"></div>
-        </details>
-
+      <div class="comandi-alto">
         <div class="riga-mic">
           <button class="occhio piccolo" id="mic" aria-label="Rispondi a voce"><span class="anello">${ICONE.microfono}</span></button>
           <div class="etichetta-mic" id="etichetta-mic"></div>
         </div>
-
         <form class="risposta" id="form-risposta">
           <textarea id="campo" rows="1" placeholder="…oppure scrivi qui" aria-label="La tua risposta"
             autocapitalize="sentences" spellcheck="true"></textarea>
           <button class="pillola viola" type="submit" id="invia">Invia</button>
         </form>
+        <div id="avviso"></div>
+      </div>
 
+      <ul class="chat" id="chat" aria-live="polite"></ul>
+
+      <div class="comandi-basso">
+        <details class="scheda-ripiegabile">
+          <summary id="sommario-scheda"></summary>
+          <div id="scheda"></div>
+        </details>
         <div class="azioni">
           <button class="pillola grigia" data-azione="indietro">Riprendi dopo</button>
           <button class="pillola verde" id="pronta">Segna pronta</button>
@@ -72,7 +72,7 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     const voci = [`<li class="app">${esc(BENVENUTO)}</li>`];
     for (const m of dialogo.messaggi) voci.push(`<li class="${m.ruolo}">${esc(m.testo)}</li>`);
     if (occupato) voci.push('<li class="app pensa">Sto pensando…</li>');
-    $('#chat').innerHTML = voci.join('');
+    $('#chat').innerHTML = voci.reverse().join(''); // il più recente in cima, sotto il microfono
 
     const ripetibile = !occupato && attendeDomanda(dialogo);
     if (mancantiDaConfermare) {
@@ -96,8 +96,7 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     $('#invia').disabled = occupato;
     $('#voce').innerHTML = leggiDomande ? ICONE.altoparlante : ICONE.muto;
     $('#voce').setAttribute('aria-label', leggiDomande ? 'Non leggere le domande ad alta voce' : 'Leggi le domande ad alta voce');
-    const chat = $('#chat');
-    chat.scrollTop = chat.scrollHeight; // scorre solo l'area dei messaggi, non la pagina
+    $('#chat').scrollTop = 0; // si torna all'ultimo messaggio, la pagina resta ferma
   }
 
   const idEsistenti = () => stato.dialoghi.filter((d) => d.chiave !== dialogo.chiave && d.idea).map((d) => d.idea.id);

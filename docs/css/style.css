@@ -144,11 +144,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
   height: calc(100vh - 36px);
   height: calc(100dvh - 36px - env(safe-area-inset-bottom));
 }
-.schermo-chat .chat { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-top: 8px; padding-bottom: 4px; }
-.comandi { flex-shrink: 0; padding-top: 8px; border-top: 1px solid #262626; }
-.comandi .avviso { margin: 0 0 8px; }
-.comandi .risposta { margin-top: 8px; }
-.comandi .azioni { margin-top: 8px; }
+.schermo-chat .chat { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 10px 0 4px; }
+.comandi-alto { flex-shrink: 0; padding: 8px 0 10px; border-bottom: 1px solid #262626; }
+.comandi-alto .risposta { margin-top: 8px; }
+.comandi-alto .avviso { margin: 8px 0 0; }
+.comandi-basso { flex-shrink: 0; padding-top: 8px; border-top: 1px solid #262626; }
+.comandi-basso .azioni { margin-top: 0; }
+.comandi-basso .scheda-ripiegabile[open] > div { max-height: 25vh; }
 .riga-mic { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .riga-mic .occhio { margin: 0; }
 .riga-mic .etichetta-mic { margin-top: 0; text-align: left; }
