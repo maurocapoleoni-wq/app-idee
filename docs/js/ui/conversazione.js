@@ -4,6 +4,7 @@
 
 import {
   nuovoDialogo, aggiungiMessaggio, attendeDomanda, normalizzaRisposta, assicuraIdea, applicaRisposta,
+  sezioniMancanti,
 } from '../dialogo.js';
 import { cambiaStato, STATI } from '../idee.js';
 import { creaClaude } from '../claude.js';
@@ -24,6 +25,7 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   let avviso = '';
   let ascolto = null;
   let inviaAllaFine = false;
+  let mancantiDaConfermare = null;
   let leggiDomande = leggiPreferenzaVoce();
 
   radice.innerHTML = `
@@ -69,7 +71,15 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     $('#chat').innerHTML = voci.join('');
 
     const ripetibile = !occupato && attendeDomanda(dialogo);
-    $('#avviso').innerHTML = avviso
+    if (mancantiDaConfermare) {
+      $('#avviso').innerHTML = `<div class="avviso">
+        Mancano ancora: ${esc(mancantiDaConfermare.join(', '))}. A casa la skill dovrà chiederteli. Segnarla pronta comunque?
+        <button class="pillola grigia" id="continua">Continuo a rispondere</button>
+        <button class="pillola verde" id="conferma-pronta">Pronta comunque</button>
+      </div>`;
+      $('#continua').onclick = () => { mancantiDaConfermare = null; disegna(); };
+      $('#conferma-pronta').onclick = segnaPronta;
+    } else $('#avviso').innerHTML = avviso
       ? `<div class="avviso">${esc(avviso)}${ripetibile ? ' <button class="pillola grigia" id="riprova">Riprova</button>' : ''}</div>`
       : '';
     $('#riprova')?.addEventListener('click', chiediDomanda);
@@ -127,6 +137,7 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   async function invia(testo) {
     const t = String(testo ?? '').trim();
     if (!t || occupato) return;
+    mancantiDaConfermare = null;
     dialogo = aggiungiMessaggio(dialogo, 'utente', t);
     campo.value = '';
     localStorage.removeItem(chiaveBozza);
@@ -196,11 +207,22 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
       invia(campo.value);
     }
   };
-  $('#pronta').onclick = async () => {
+  async function segnaPronta() {
     if (!dialogo.idea || occupato) return;
     if (dialogo.idea.stato === STATI.IN_DISCUSSIONE) dialogo = { ...dialogo, idea: cambiaStato(dialogo.idea, STATI.PRONTA) };
     await salva();
     vai('home');
+  }
+  $('#pronta').onclick = () => {
+    if (!dialogo.idea || occupato) return;
+    const mancanti = sezioniMancanti(dialogo.scheda);
+    if (!mancanti.length) {
+      segnaPronta();
+      return;
+    }
+    mancantiDaConfermare = mancanti;
+    disegna();
+    $('#avviso').scrollIntoView({ block: 'center', behavior: 'smooth' });
   };
   const esci = () => {
     ascolto?.ferma();

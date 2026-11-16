@@ -73,6 +73,15 @@ export function unisciScheda(vecchia, nuova) {
   return r;
 }
 
+// Sezioni che la skill sul PC si aspetta compilate prima di impostare il progetto.
+const ESSENZIALI = [['problema', 'Problema'], ['utenti', 'Utenti'], ['funzioni', 'Funzioni'], ['piattaforma', 'Piattaforma']];
+
+export function sezioniMancanti(scheda = {}) {
+  return ESSENZIALI
+    .filter(([k]) => (Array.isArray(scheda[k]) ? scheda[k].length === 0 : !String(scheda[k] ?? '').trim()))
+    .map(([, nome]) => nome);
+}
+
 export function titoloProvvisorio(testo) {
   const t = String(testo ?? '')
     .trim()

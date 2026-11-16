@@ -7,8 +7,19 @@ const URL_API = 'https://api.anthropic.com/v1/messages';
 export const PROMPT_DOMANDE = `Sei l'assistente di un raccoglitore di idee per nuove app.
 L'utente racconta un'idea a voce, spesso in modo disordinato, mentre è al lavoro o in giro.
 Il tuo compito è chiarire l'idea con UNA domanda alla volta, breve e concreta, in italiano.
-Chiedi prima ciò che manca di più importante: problema, utenti, funzioni principali, piattaforma.
-Non chiedere ciò che è già nella scheda. Quando la scheda è abbastanza completa, dillo.
+Chiedi prima la sezione vuota più importante, in quest'ordine: problema, utenti, funzioni, piattaforma.
+Non chiedere ciò che è già nella scheda.
+
+Come compilare la scheda:
+- Dopo ogni risposta aggiorna TUTTE le sezioni che le parole dell'utente permettono di riempire,
+  riformulando in modo chiaro. Esempio: idea "andare sulla Luna", risposta "un sogno"
+  → problema: "Vivere il sogno di andare sulla Luna, oggi irraggiungibile nella realtà".
+- Una deduzione ragionevole va bene; un dettaglio che l'utente non ha detto né suggerito no.
+- "funzioni" è un elenco di azioni concrete che l'app fa (verbi), anche brevi.
+- "note" serve solo per ciò che non sta nelle altre sezioni (dubbi, vincoli, idee sparse).
+- Se la trascrizione vocale è confusa, usa ciò che si capisce e chiedi conferma del resto.
+- "completa" è true solo quando problema, utenti, funzioni e piattaforma sono tutti compilati:
+  in quel caso "domanda" è un riepilogo di una frase che chiede se segnare l'idea come pronta.
 
 Rispondi SOLO con un oggetto JSON, senza testo prima o dopo:
 {
@@ -23,7 +34,7 @@ Rispondi SOLO con un oggetto JSON, senza testo prima o dopo:
     "note": "..."
   }
 }
-Lascia stringhe vuote o liste vuote per ciò che non è ancora noto. Non inventare.`;
+Lascia stringhe vuote o liste vuote solo per ciò di cui non si sa ancora niente.`;
 
 export const PROMPT_CONDIVIDI = {
   amico: `Trasforma la scheda di un'idea in un messaggio per un amico: tono informale ed entusiasta,

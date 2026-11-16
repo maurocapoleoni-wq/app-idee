@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   nuovoDialogo, aggiungiMessaggio, attendeDomanda, normalizzaRisposta, unisciScheda,
-  titoloProvvisorio, idUnico, assicuraIdea, applicaRisposta, salvataggiDelDialogo, schedaVuota,
+  titoloProvvisorio, idUnico, sezioniMancanti, assicuraIdea, applicaRisposta, salvataggiDelDialogo, schedaVuota,
 } from '../docs/js/dialogo.js';
 import { cambiaStato, STATI } from '../docs/js/idee.js';
 import { creaArchivio } from '../docs/js/archivio.js';
@@ -67,6 +67,13 @@ test('unisciScheda non cancella ciò che era già noto', () => {
   assert.equal(r.utenti, 'famiglie');
   assert.deepEqual(r.funzioni, ['a']);
   assert.deepEqual(unisciScheda(vecchia, { ...schedaVuota(), funzioni: ['b', 'c'] }).funzioni, ['b', 'c']);
+});
+
+test('sezioniMancanti elenca le sezioni essenziali ancora vuote', () => {
+  assert.deepEqual(sezioniMancanti(schedaVuota()), ['Problema', 'Utenti', 'Funzioni', 'Piattaforma']);
+  assert.deepEqual(sezioniMancanti({ ...schedaVuota(), problema: 'x', funzioni: ['a'], note: 'solo note' }), ['Utenti', 'Piattaforma']);
+  assert.deepEqual(sezioniMancanti({ problema: 'a', utenti: 'b', funzioni: ['c'], piattaforma: '  d ' }), []);
+  assert.deepEqual(sezioniMancanti({ ...schedaVuota(), utenti: '   ' }).includes('Utenti'), true);
 });
 
 test('titoloProvvisorio prende le prime parole', () => {

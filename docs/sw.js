@@ -2,7 +2,7 @@
 // Le chiamate alle API (GitHub, Anthropic, YouTube) non passano mai dalla cache.
 // Aumentare VERSIONE a ogni rilascio per aggiornare la cache sui telefoni.
 
-const VERSIONE = 'idee-v2';
+const VERSIONE = 'idee-v3';
 const FILE_APP = [
   './',
   './index.html',
@@ -47,8 +47,10 @@ self.addEventListener('fetch', (evento) => {
   const url = new URL(evento.request.url);
   if (evento.request.method !== 'GET' || url.origin !== self.location.origin) return;
   // Rete prima, cache come riserva: con la rete si ha sempre la versione aggiornata.
+  // cache 'no-cache' scavalca la cache HTTP (GitHub Pages la tiene 10 minuti): senza,
+  // dopo un aggiornamento si potrebbero mescolare moduli nuovi e vecchi.
   evento.respondWith(
-    fetch(evento.request)
+    fetch(url.href, { cache: 'no-cache', credentials: 'same-origin' })
       .then((risposta) => {
         const copia = risposta.clone();
         caches.open(VERSIONE).then((c) => c.put(evento.request, copia));
