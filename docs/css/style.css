@@ -138,7 +138,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: rgba(186, 117, 23, .15); color: #efb563; border-radius: 10px; padding: 10px 12px; margin-top: 12px;
   font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
-#mic { margin-top: 20px; }
+/* Impaginazione da chat: la pagina è ferma, scorre solo l'elenco dei messaggi */
+.schermo-chat {
+  display: flex; flex-direction: column;
+  height: calc(100vh - 36px);
+  height: calc(100dvh - 36px - env(safe-area-inset-bottom));
+}
+.schermo-chat .chat { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-top: 8px; padding-bottom: 4px; }
+.comandi { flex-shrink: 0; padding-top: 8px; border-top: 1px solid #262626; }
+.comandi .avviso { margin: 0 0 8px; }
+.comandi .risposta { margin-top: 8px; }
+.comandi .azioni { margin-top: 8px; }
+.riga-mic { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.riga-mic .occhio { margin: 0; }
+.riga-mic .etichetta-mic { margin-top: 0; text-align: left; }
+.scheda-ripiegabile { background: var(--superficie-2); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; }
+.scheda-ripiegabile summary { cursor: pointer; color: var(--testo-2); font-size: 14px; }
+.scheda-ripiegabile[open] > div { max-height: 30vh; overflow-y: auto; margin-top: 6px; }
+.scheda-ripiegabile p { margin: 4px 0; color: var(--testo-2); font-size: 14px; }
 .etichetta-mic { text-align: center; color: var(--viola-chiaro); font-size: 15px; margin-top: 8px; }
 .risposta { display: flex; gap: 8px; align-items: flex-end; margin-top: 12px; }
 .risposta textarea {

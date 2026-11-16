@@ -26,30 +26,39 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   const leggiDomande = localStorage.getItem(`${PREFISSO}leggi-domande`) !== '0';
 
   radice.innerHTML = `
-    <header class="barra">
-      <button class="icona-btn" data-azione="indietro" aria-label="Indietro">${ICONE.indietro}</button>
-      <h1>Migliora: ${esc(dialogo.idea.titolo)}</h1>
-      <span id="indicatore" class="indicatore">…</span>
-    </header>
-    <p class="nota">Versione attuale ${dialogo.idea.versione}. La miglioria diventerà la versione ${dialogo.idea.versione + 1}.</p>
+    <div class="schermo-chat">
+      <header class="barra">
+        <button class="icona-btn" data-azione="indietro" aria-label="Indietro">${ICONE.indietro}</button>
+        <h1>Migliora: ${esc(dialogo.idea.titolo)}</h1>
+        <span id="indicatore" class="indicatore">…</span>
+      </header>
+      <p class="nota">Diventerà la versione ${dialogo.idea.versione + 1}.</p>
 
-    <ul class="chat" id="chat" aria-live="polite"></ul>
-    <div id="avviso"></div>
+      <ul class="chat" id="chat" aria-live="polite"></ul>
 
-    <button class="occhio piccolo" id="mic" aria-label="Racconta la miglioria a voce"><span class="anello">${ICONE.microfono}</span></button>
-    <div class="etichetta-mic" id="etichetta-mic"></div>
+      <div class="comandi">
+        <div id="avviso"></div>
+        <details class="scheda-ripiegabile">
+          <summary id="sommario-riepilogo"></summary>
+          <div id="riepilogo"></div>
+        </details>
 
-    <form class="risposta" id="form-risposta">
-      <textarea id="campo" rows="2" placeholder="…oppure scrivi qui" aria-label="La tua risposta"
-        autocapitalize="sentences" spellcheck="true"></textarea>
-      <button class="pillola viola" type="submit" id="invia">Invia</button>
-    </form>
+        <div class="riga-mic">
+          <button class="occhio piccolo" id="mic" aria-label="Racconta la miglioria a voce"><span class="anello">${ICONE.microfono}</span></button>
+          <div class="etichetta-mic" id="etichetta-mic"></div>
+        </div>
 
-    <div class="riquadro" id="riepilogo"></div>
+        <form class="risposta" id="form-risposta">
+          <textarea id="campo" rows="1" placeholder="…oppure scrivi qui" aria-label="La tua risposta"
+            autocapitalize="sentences" spellcheck="true"></textarea>
+          <button class="pillola viola" type="submit" id="invia">Invia</button>
+        </form>
 
-    <div class="azioni">
-      <button class="pillola grigia" data-azione="indietro">Riprendi dopo</button>
-      <button class="pillola verde" id="salva">Salva miglioria</button>
+        <div class="azioni">
+          <button class="pillola grigia" data-azione="indietro">Riprendi dopo</button>
+          <button class="pillola verde" id="salva">Salva miglioria</button>
+        </div>
+      </div>
     </div>
   `;
   const $ = (sel) => radice.querySelector(sel);
@@ -65,15 +74,16 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
       ? `<div class="avviso">${esc(avviso)}${ripetibile ? ' <button class="pillola grigia" id="riprova">Riprova</button>' : ''}</div>`
       : '';
     $('#riprova')?.addEventListener('click', chiediDomanda);
+    $('#sommario-riepilogo').textContent = b.titolo ? `Miglioria: ${b.titolo}` : 'Miglioria in costruzione';
     $('#riepilogo').innerHTML = `
-      <h2>Miglioria in costruzione</h2>
       <p><strong>Titolo:</strong> ${b.titolo ? esc(b.titolo) : '<em>da definire</em>'}</p>
       <p><strong>Cosa cambia:</strong> ${b.descrizione ? esc(b.descrizione) : '<em>da definire</em>'}</p>`;
     const haTesto = b.messaggi.some((m) => m.ruolo === 'utente');
     $('#salva').disabled = occupato || !haTesto;
     $('#salva').classList.toggle('evidenzia', b.completa);
     $('#invia').disabled = occupato;
-    $('#chat').lastElementChild?.scrollIntoView({ block: 'nearest' });
+    const chat = $('#chat');
+    chat.scrollTop = chat.scrollHeight; // scorre solo l'area dei messaggi, non la pagina
   }
 
   async function salvaBozza() {

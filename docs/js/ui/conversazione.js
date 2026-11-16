@@ -26,34 +26,42 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   let mancantiDaConfermare = null;
   let leggiDomande = leggiPreferenzaVoce();
 
+  // Impaginazione da chat: la pagina non scorre, scorre solo l'area dei messaggi.
+  // Microfono e campo restano fermi in basso, sotto il pollice.
   radice.innerHTML = `
-    <header class="barra">
-      <button class="icona-btn" data-azione="indietro" aria-label="Indietro">${ICONE.indietro}</button>
-      <h1 id="titolo"></h1>
-      <button class="icona-btn" id="voce" aria-label=""></button>
-      <span id="indicatore" class="indicatore">…</span>
-    </header>
+    <div class="schermo-chat">
+      <header class="barra">
+        <button class="icona-btn" data-azione="indietro" aria-label="Indietro">${ICONE.indietro}</button>
+        <h1 id="titolo"></h1>
+        <button class="icona-btn" id="voce" aria-label=""></button>
+        <span id="indicatore" class="indicatore">…</span>
+      </header>
 
-    <ul class="chat" id="chat" aria-live="polite"></ul>
-    <div id="avviso"></div>
+      <ul class="chat" id="chat" aria-live="polite"></ul>
 
-    <button class="occhio piccolo" id="mic" aria-label="Rispondi a voce"><span class="anello">${ICONE.microfono}</span></button>
-    <div class="etichetta-mic" id="etichetta-mic"></div>
+      <div class="comandi">
+        <div id="avviso"></div>
+        <details class="scheda-ripiegabile">
+          <summary id="sommario-scheda"></summary>
+          <div id="scheda"></div>
+        </details>
 
-    <form class="risposta" id="form-risposta">
-      <textarea id="campo" rows="2" placeholder="…oppure scrivi qui" aria-label="La tua risposta"
-        autocapitalize="sentences" spellcheck="true"></textarea>
-      <button class="pillola viola" type="submit" id="invia">Invia</button>
-    </form>
+        <div class="riga-mic">
+          <button class="occhio piccolo" id="mic" aria-label="Rispondi a voce"><span class="anello">${ICONE.microfono}</span></button>
+          <div class="etichetta-mic" id="etichetta-mic"></div>
+        </div>
 
-    <div class="riquadro">
-      <h2>Scheda in costruzione</h2>
-      <div id="scheda"></div>
-    </div>
+        <form class="risposta" id="form-risposta">
+          <textarea id="campo" rows="1" placeholder="…oppure scrivi qui" aria-label="La tua risposta"
+            autocapitalize="sentences" spellcheck="true"></textarea>
+          <button class="pillola viola" type="submit" id="invia">Invia</button>
+        </form>
 
-    <div class="azioni">
-      <button class="pillola grigia" data-azione="indietro">Riprendi dopo</button>
-      <button class="pillola verde" id="pronta">Segna pronta</button>
+        <div class="azioni">
+          <button class="pillola grigia" data-azione="indietro">Riprendi dopo</button>
+          <button class="pillola verde" id="pronta">Segna pronta</button>
+        </div>
+      </div>
     </div>
   `;
 
@@ -81,13 +89,15 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     $('#riprova')?.addEventListener('click', chiediDomanda);
 
     $('#scheda').innerHTML = schedaHtml(dialogo.scheda);
+    $('#sommario-scheda').textContent = `Scheda: ${4 - sezioniMancanti(dialogo.scheda).length} sezioni su 4`;
     const pronta = $('#pronta');
     pronta.disabled = occupato || !dialogo.idea;
     pronta.classList.toggle('evidenzia', dialogo.completa);
     $('#invia').disabled = occupato;
     $('#voce').innerHTML = leggiDomande ? ICONE.altoparlante : ICONE.muto;
     $('#voce').setAttribute('aria-label', leggiDomande ? 'Non leggere le domande ad alta voce' : 'Leggi le domande ad alta voce');
-    $('#chat').lastElementChild?.scrollIntoView({ block: 'nearest' });
+    const chat = $('#chat');
+    chat.scrollTop = chat.scrollHeight; // scorre solo l'area dei messaggi, non la pagina
   }
 
   const idEsistenti = () => stato.dialoghi.filter((d) => d.chiave !== dialogo.chiave && d.idea).map((d) => d.idea.id);
@@ -171,7 +181,6 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     }
     mancantiDaConfermare = mancanti;
     disegna();
-    $('#avviso').scrollIntoView({ block: 'center', behavior: 'smooth' });
   };
   const esci = () => {
     dettatura.ferma();
