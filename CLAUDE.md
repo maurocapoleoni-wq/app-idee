@@ -37,7 +37,13 @@ Web app per telefono che cattura a voce idee di nuove app, le chiarisce con Clau
 9. **Le ricerche YouTube partono solo su richiesta esplicita** e i risultati si salvano per non consumare di nuovo la quota.
 10. **Nessun push verso GitHub senza conferma dell'utente** durante lo sviluppo.
 
-Oggi nessuna regola è coperta da un guardrail automatico. Le prime candidate per gli hook (`genera_hooks_policy`) sono la 1, la 6 e la 10.
+Guardrail automatici (dettagli e come disattivarli in `.claude/HOOKS_DECISIONS.md`):
+- regola 1: `blocca_segreti.mjs` blocca chiavi e token in file, comandi e commit;
+- regola 6: `verifica_cartelle.mjs`, nell'intestazione della skill `imposta-idee`;
+- regola 10: `conferma_push.mjs` chiede conferma a ogni push e blocca quelli forzati;
+- definizione di fatto, punto 3: `test_dopo_modifica.mjs` lancia `npm test` dopo ogni modifica in `docs/js/` o `test/`.
+
+Le altre regole restano solo istruzioni.
 
 ## SKILL DISPONIBILI
 

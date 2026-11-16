@@ -1,6 +1,12 @@
 ---
 name: imposta-idee
 description: Legge la cassetta delle idee (repo GitHub privato cassetta-idee) e, sul PC di casa, imposta i progetti delle idee pronte oppure applica le migliorie in attesa ai progetti esistenti. Usala quando l'utente dice "imposta le idee pronte", "applica le migliorie", "cosa c'è nella cassetta" o simili.
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit|MultiEdit"
+      hooks:
+        - type: command
+          command: node "$HOME/.claude/skills/imposta-idee/verifica_cartelle.mjs"
 ---
 
 # Imposta idee
