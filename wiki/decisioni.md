@@ -50,5 +50,8 @@ Si sposta con un tocco dalla pagina dell'idea; in home compare per 6 secondi un 
 ## 2026-11-16 · passo 5 — Condividi usa solo la parte pubblica della scheda
 `schedaPerCondividere` prende titolo, problema, utenti, funzioni e piattaforma: le **Note** restano fuori perché possono contenere dubbi o appunti interni (regola 8), come conversazioni, stato e migliorie. Una modifica ("più corto") manda a Haiku scheda pubblica + messaggio attuale + richiesta. L'ultimo messaggio resta in `localStorage` per idea. Senza menu di condivisione (browser del PC) il testo va negli appunti.
 
+## 2026-11-16 · passo 6 — Ispirazione YouTube: un filtro alla volta
+Risolta la domanda aperta di PROGETTO.md: tutti e tre i tipi (esiste già? / come si costruisce / idee per l'interfaccia) come filtri, ma ognuno si cerca solo toccando il suo pulsante (100 unità ciascuno), così una visita costa 100 e non 300. Haiku prepara le tre query una volta sola per idea, dalla parte pubblica della scheda. I risultati restano nel dialogo e in `ispirazione.md`: riaprirli non consuma quota. Il contatore di quota conta per giorno del Pacifico (quando YouTube azzera) ed è solo di questo telefono: la chiave è condivisa con la prima app, quindi il consumo reale può essere più alto. Rimandato: il riassunto in italiano dei video da parte di Haiku.
+
 ## 2026-11-16 · hook — Guardrail in Node, registrati solo in locale
 Gli script sono in Node perché girano allo stesso modo su Windows e Node c'è già. La registrazione sta in `settings.local.json`, quindi non finisce nel repo pubblico. L'hook della regola 6 sta invece nell'intestazione della skill `imposta-idee`: la skill gira da cartelle diverse da questo progetto e un hook di progetto non la coprirebbe. Dettagli in `.claude/HOOKS_DECISIONS.md`.

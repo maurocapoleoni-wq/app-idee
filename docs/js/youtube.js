@@ -24,7 +24,23 @@ export async function cercaVideo({ chiave, query, massimo = 8, fetch: f = global
     key: chiave,
   }).toString();
   const r = await f(url.toString());
-  if (!r.ok) throw new Error(`YouTube ha risposto ${r.status}`);
+  if (!r.ok) {
+    let motivo = '';
+    try {
+      motivo = (await r.json()).error?.errors?.[0]?.reason ?? '';
+    } catch {
+      /* nessun dettaglio */
+    }
+    const spiegazioni = {
+      quotaExceeded: 'la quota YouTube di oggi è finita: riprova domani',
+      keyInvalid: 'la chiave YouTube non è valida: controllala nelle Impostazioni',
+      ipRefererBlocked: 'la chiave YouTube non accetta richieste da questo sito: controlla le restrizioni della chiave',
+      forbidden: 'la chiave YouTube non ha accesso alla YouTube Data API',
+    };
+    const e = new Error(spiegazioni[motivo] ?? `YouTube ha risposto ${r.status}${motivo ? ` (${motivo})` : ''}`);
+    e.motivo = motivo;
+    throw e;
+  }
   const dati = await r.json();
   return (dati.items ?? []).map((v) => ({
     id: v.id.videoId,

@@ -2,7 +2,8 @@
 // Nessun accesso a DOM, rete o memoria. Ogni funzione restituisce un nuovo oggetto.
 
 import { creaIdea, aggiungiMiglioria, STATI } from './idee.js';
-import { fileDiSalvataggio, messaggioCommit, migliorieMd, percorsoMiglioria } from './cassetta.js';
+import { fileDiSalvataggio, messaggioCommit, migliorieMd, percorsoMiglioria, percorsiIdea } from './cassetta.js';
+import { ispirazioneMd } from './ispirazione.js';
 
 const CAMPI_TESTO = ['problema', 'utenti', 'piattaforma', 'note'];
 const RUOLI = new Set(['app', 'utente']);
@@ -199,6 +200,9 @@ export function salvataggioDelDialogo(dialogo, { soloStato = false, azione } = {
   const messaggio = messaggioCommit(idea, azione ?? AZIONI[idea.stato] ?? 'Aggiorna idea');
   if (soloStato) return { chiave: idea.id, files: fileDiSalvataggio(idea), messaggio };
   const files = fileDiSalvataggio(idea, { scheda: dialogo.scheda, messaggi: dialogo.messaggi });
+  if (dialogo.ispirazione && Object.keys(dialogo.ispirazione.risultati ?? {}).length) {
+    files.push({ percorso: percorsiIdea(idea.id).ispirazione, contenuto: ispirazioneMd(idea, dialogo.ispirazione) });
+  }
   for (const m of idea.migliorie) {
     const locale = dialogo.migliorie?.[m.versione];
     // Le migliorie arrivate dalla cassetta hanno già il loro file: non si riscrivono.

@@ -52,6 +52,9 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     ${dialogo && [STATI.IN_DISCUSSIONE, STATI.PRONTA].includes(idea.stato) ? `
       <div class="azioni"><button class="pillola viola" id="riapri">Continua la conversazione</button></div>` : ''}
 
+    ${dialogo ? `<div class="azioni"><button class="pillola rossa" id="ispirazione">${ICONE.play} Ispirazione da YouTube${
+      Object.keys(dialogo.ispirazione?.risultati ?? {}).length ? ' · salvata' : ''}</button></div>` : ''}
+
     <div class="riquadro">
       <h2>Storico</h2>
       ${storico.map((s) => `<p>v${s.v} · ${esc(s.testo)} · <span class="nota">${data(s.quando)}${s.nota ? ` · ${s.nota}` : ''}</span></p>`).join('')}
@@ -74,6 +77,7 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     </p>
   `;
   radice.querySelector('[data-azione="indietro"]').onclick = () => vai('home');
+  radice.querySelector('#ispirazione')?.addEventListener('click', () => vai('ispirazione', { id: idea.id }));
   radice.querySelector('#condividi').onclick = () => {
     if (dialogo) vai('condivisione', { id: idea.id });
   };
