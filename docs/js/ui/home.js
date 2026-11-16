@@ -108,10 +108,16 @@ export function mostra(radice, { stato, vai }) {
     const avviso = document.createElement('div');
     avviso.className = 'avviso-flottante';
     avviso.setAttribute('role', 'status');
-    avviso.innerHTML = `<span>${esc(testo)}</span><button class="pillola grigia">Annulla</button>`;
+    // Lo spostamento è già fatto: "Ok" chiude l'avviso, "Annulla" torna indietro.
+    avviso.innerHTML = `<span>${esc(testo)}</span>
+      <span class="pulsanti-avviso"><button class="pillola grigia" data-annulla>Annulla</button><button class="pillola viola" data-ok>Ok</button></span>`;
     radice.querySelector('.schermo-home').append(avviso);
     const chiudi = setTimeout(() => avviso.remove(), 6000);
-    avviso.querySelector('button').onclick = async () => {
+    avviso.querySelector('[data-ok]').onclick = () => {
+      clearTimeout(chiudi);
+      avviso.remove();
+    };
+    avviso.querySelector('[data-annulla]').onclick = async () => {
       clearTimeout(chiudi);
       avviso.remove();
       await annulla();
