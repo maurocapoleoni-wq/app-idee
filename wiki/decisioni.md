@@ -47,5 +47,8 @@ Richiesta dell'utente dopo le prove sul telefono. La home non scorre mai e i pul
 ## 2026-11-16 · passo 4 — Archivio e cestino senza conferma, con Annulla
 Si sposta con un tocco dalla pagina dell'idea; in home compare per 6 secondi un avviso con "Annulla". Nessuna finestra di conferma perché nulla si perde: il cestino è per sempre e "Ripristina" riporta lo stato precedente. Ogni mossa è un commit che cambia solo `stato.json` (`salvataggioDelDialogo(…, { soloStato: true })`), regola 4. Dalla home ogni idea apre la sua pagina (anche quelle in discussione, con "Continua la conversazione"), così le azioni stanno in un posto solo. Le idee d'esempio non si spostano.
 
+## 2026-11-16 · passo 5 — Condividi usa solo la parte pubblica della scheda
+`schedaPerCondividere` prende titolo, problema, utenti, funzioni e piattaforma: le **Note** restano fuori perché possono contenere dubbi o appunti interni (regola 8), come conversazioni, stato e migliorie. Una modifica ("più corto") manda a Haiku scheda pubblica + messaggio attuale + richiesta. L'ultimo messaggio resta in `localStorage` per idea. Senza menu di condivisione (browser del PC) il testo va negli appunti.
+
 ## 2026-11-16 · hook — Guardrail in Node, registrati solo in locale
 Gli script sono in Node perché girano allo stesso modo su Windows e Node c'è già. La registrazione sta in `settings.local.json`, quindi non finisce nel repo pubblico. L'hook della regola 6 sta invece nell'intestazione della skill `imposta-idee`: la skill gira da cartelle diverse da questo progetto e un hook di progetto non la coprirebbe. Dettagli in `.claude/HOOKS_DECISIONS.md`.

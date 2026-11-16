@@ -41,6 +41,23 @@ test('componiMessaggio rifiuta destinatari sconosciuti', async () => {
   await assert.rejects(claude.componiMessaggio({ schedaMarkdown: '# x', destinatario: 'capo' }), /sconosciuto/);
 });
 
+test('componiMessaggio manda scheda, messaggio attuale e richiesta, niente altro', async () => {
+  let corpo;
+  const claude = creaClaude({
+    apiKey: 'k',
+    fetch: async (_u, o) => {
+      corpo = JSON.parse(o.body);
+      return { ok: true, json: async () => ({ content: [{ type: 'text', text: '  Ciao!  ' }] }) };
+    },
+  });
+  const testo = await claude.componiMessaggio({
+    schedaMarkdown: '# Spesa', destinatario: 'amico', messaggioAttuale: 'Messaggio lungo', richiesta: 'più corto',
+  });
+  assert.equal(testo, 'Ciao!');
+  assert.match(corpo.messages[0].content, /Scheda dell'idea:\n# Spesa[\s\S]*Messaggio attuale:\nMessaggio lungo[\s\S]*Richiesta di modifica: più corto/);
+  assert.match(corpo.system, /informale/);
+});
+
 test('senza chiave Claude non parte', () => {
   assert.throws(() => creaClaude({ apiKey: '' }), /chiave API/);
 });

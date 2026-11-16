@@ -96,6 +96,18 @@ export function schedaMd(idea, scheda = {}) {
   ].join('\n');
 }
 
+// Ciò che può uscire dal telefono quando si condivide (regola 8): titolo e sezioni pubbliche
+// della scheda. Mai le Note, mai le conversazioni, mai lo stato o le migliorie.
+export function schedaPerCondividere(idea, scheda = {}) {
+  const parti = [`# ${idea.titolo}`];
+  const testo = (v) => String(v ?? '').trim();
+  if (testo(scheda.problema)) parti.push(`## Problema\n\n${testo(scheda.problema)}`);
+  if (testo(scheda.utenti)) parti.push(`## Utenti\n\n${testo(scheda.utenti)}`);
+  if (scheda.funzioni?.length) parti.push(`## Funzioni\n\n${scheda.funzioni.map((f) => `- ${f}`).join('\n')}`);
+  if (testo(scheda.piattaforma)) parti.push(`## Piattaforma\n\n${testo(scheda.piattaforma)}`);
+  return `${parti.join('\n\n')}\n`;
+}
+
 const NOMI_RUOLO = { app: 'App', utente: 'Tu' };
 
 export function conversazioneMd(idea, messaggi = []) {

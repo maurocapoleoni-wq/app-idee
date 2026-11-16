@@ -14,6 +14,15 @@ test('scheda.md si rilegge uguale a come è stata scritta', () => {
   assert.deepEqual(leggiSchedaMd(''), { problema: '', utenti: '', funzioni: [], piattaforma: '', note: '' });
 });
 
+test('la scheda da condividere non contiene note, conversazioni né stato (regola 8)', async () => {
+  const { schedaPerCondividere } = await import('../docs/js/cassetta.js');
+  const testo = schedaPerCondividere(idea, {
+    problema: 'Dimentico la spesa', utenti: '', funzioni: ['lista condivisa'], piattaforma: 'Telefono', note: 'NOTA INTERNA segreta',
+  });
+  assert.equal(testo, '# Spesa\n\n## Problema\n\nDimentico la spesa\n\n## Funzioni\n\n- lista condivisa\n\n## Piattaforma\n\nTelefono\n');
+  assert.doesNotMatch(testo, /NOTA INTERNA|in_discussione|Utenti/);
+});
+
 test('conversazione.md si rilegge con ruoli, testo e ora al minuto', () => {
   const messaggi = [
     { ruolo: 'utente', testo: 'una app per la spesa', ora: new Date(2026, 10, 16, 10, 30).toISOString() },

@@ -62,7 +62,7 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
       <div class="etichetta-occhio" style="font-size:16px">${bozzaAperta ? 'Riprendi la miglioria' : 'Migliora questa idea'}</div>` : ''}
 
     <div class="azioni">
-      <button class="pillola grigia" disabled>Condividi</button>
+      <button class="pillola viola" id="condividi" ${dialogo ? '' : 'disabled'}>${ICONE.messaggio} Condividi</button>
       ${idea.stato === STATI.ARCHIVIATA || idea.stato === STATI.NEL_CESTINO
         ? `<button class="pillola verde" data-sposta="ripristina">Ripristina</button>` : ''}
       ${idea.stato !== STATI.ARCHIVIATA ? `<button class="pillola grigia" data-sposta="archivia">${ICONE.scatola} Archivia</button>` : ''}
@@ -70,11 +70,13 @@ export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     </div>
     <p class="nota" style="text-align:center">
       ${dialogo ? 'Archivio e cestino cambiano solo lo stato: non si perde niente e il progetto sul PC non viene toccato.'
-        : 'Le idee d\'esempio non si possono spostare.'}
-      Condividi arriva nel prossimo passo.
+        : 'Le idee d\'esempio non si possono spostare né condividere.'}
     </p>
   `;
   radice.querySelector('[data-azione="indietro"]').onclick = () => vai('home');
+  radice.querySelector('#condividi').onclick = () => {
+    if (dialogo) vai('condivisione', { id: idea.id });
+  };
   radice.querySelector('#riapri')?.addEventListener('click', async () => {
     if (dialogo.idea.stato === STATI.PRONTA) {
       await salvaDialogo({ ...dialogo, idea: cambiaStato(dialogo.idea, STATI.IN_DISCUSSIONE) });

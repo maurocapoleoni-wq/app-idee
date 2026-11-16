@@ -121,11 +121,17 @@ export function creaClaude({ apiKey, fetch: f = globalThis.fetch?.bind(globalThi
   }
 
   // Usa SOLO la scheda: mai conversazioni o note interne (regola non negoziabile).
-  async function componiMessaggio({ modello, schedaMarkdown, destinatario, richiesta = '' }) {
-    const system = PROMPT_CONDIVIDI[destinatario];
-    if (!system) throw new Error(`Destinatario sconosciuto: ${destinatario}`);
-    const testo = `${schedaMarkdown}${richiesta ? `\n\nRichiesta di modifica: ${richiesta}` : ''}`;
-    return (await chiedi({ modello, system, testo })).trim();
+  // messaggioAttuale + richiesta: riscrive il messaggio applicando la modifica ("più corto"...).
+  async function componiMessaggio({ modello, schedaMarkdown, destinatario, richiesta = '', messaggioAttuale = '' }) {
+    const base = PROMPT_CONDIVIDI[destinatario];
+    if (!base) throw new Error(`Destinatario sconosciuto: ${destinatario}`);
+    const system = `${base}
+Se ricevi un messaggio attuale e una richiesta di modifica, riscrivi il messaggio applicando la richiesta
+e tenendo il resto. Non aggiungere informazioni che non sono nella scheda.`;
+    const parti = [`Scheda dell'idea:\n${schedaMarkdown}`];
+    if (messaggioAttuale.trim()) parti.push(`Messaggio attuale:\n${messaggioAttuale.trim()}`);
+    if (richiesta.trim()) parti.push(`Richiesta di modifica: ${richiesta.trim()}`);
+    return (await chiedi({ modello, system, testo: parti.join('\n\n') })).trim();
   }
 
   async function queryIspirazione({ modello, schedaMarkdown }) {

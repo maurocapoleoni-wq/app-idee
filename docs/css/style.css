@@ -171,6 +171,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .schermo-home .riga-input { margin: 10px 0 12px; }
 }
 
+/* Condividi: il messaggio occupa lo spazio centrale e si modifica a mano */
+.area-messaggio { flex: 1; min-height: 0; display: flex; flex-direction: column; padding-bottom: 8px; }
+.area-messaggio textarea {
+  flex: 1; min-height: 120px; resize: none; background: var(--superficie); border: 1px solid #333; border-radius: 12px;
+  padding: 12px 14px; color: var(--testo); font: inherit; line-height: 1.45;
+}
+.area-messaggio .avviso { margin-top: 8px; }
+.mic-piccolo { align-self: center; border-radius: 50%; background: var(--viola-scuro); color: #fff; }
+.mic-piccolo.ascolta { background: var(--rosso); box-shadow: 0 0 16px rgba(226, 75, 74, .6); }
+
 /* Impaginazione da chat: la pagina è ferma, scorre solo l'elenco dei messaggi */
 .schermo-chat {
   display: flex; flex-direction: column;
@@ -183,6 +193,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .comandi-alto .avviso { margin: 8px 0 0; }
 .comandi-basso { flex-shrink: 0; padding-top: 8px; border-top: 1px solid #262626; }
 .comandi-basso .azioni { margin-top: 0; }
+.comandi-basso .risposta + .etichetta-mic + .azioni { margin-top: 10px; }
 .comandi-basso .scheda-ripiegabile[open] > div { max-height: 25vh; }
 .riga-mic { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .riga-mic .occhio { margin: 0; }
