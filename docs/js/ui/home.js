@@ -1,4 +1,4 @@
-// Schermata principale: microfono, campo di testo, schede e lista 3 per pagina.
+// Schermata principale: microfono, campo di testo, schede e lista 4 per pagina.
 
 import { SCHEDE, STATI, inScheda, ordinaPerRecenti, pagina } from '../idee.js';
 import { esc, ICONE } from './dom.js';

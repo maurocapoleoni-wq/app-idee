@@ -108,12 +108,12 @@ test('ordinaPerRecenti mette prima le più recenti', () => {
   assert.deepEqual(ordinaPerRecenti([a, b]).map((i) => i.titolo), ['b', 'a']);
 });
 
-test('pagina mostra 3 idee alla volta e limita il numero di pagina', () => {
+test('pagina mostra 4 idee alla volta e limita il numero di pagina', () => {
   const lista = Array.from({ length: 10 }, (_, i) => i);
-  assert.deepEqual(pagina(lista, 1), { elementi: [0, 1, 2], numero: 1, totalePagine: 4 });
-  assert.deepEqual(pagina(lista, 4).elementi, [9]);
-  assert.equal(pagina(lista, 99).numero, 4);
-  assert.deepEqual(pagina(lista, 1, 4).elementi, [0, 1, 2, 3]);
+  assert.deepEqual(pagina(lista, 1), { elementi: [0, 1, 2, 3], numero: 1, totalePagine: 3 });
+  assert.deepEqual(pagina(lista, 3).elementi, [8, 9]);
+  assert.equal(pagina(lista, 99).numero, 3);
+  assert.deepEqual(pagina(lista, 1, 3).elementi, [0, 1, 2]);
   assert.equal(pagina(lista, 0).numero, 1);
   assert.deepEqual(pagina([], 1), { elementi: [], numero: 1, totalePagine: 1 });
 });
