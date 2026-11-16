@@ -14,7 +14,8 @@ export function memoriaInRam(iniziale = []) {
   };
 }
 
-export function memoriaIndexedDB(nomeDb = 'raccoglitore-idee') {
+// Una memoria = una chiave nello stesso database (es. 'coda', 'dialoghi').
+export function memoriaIndexedDB(nomeDb = 'raccoglitore-idee', chiave = 'coda') {
   const apri = () =>
     new Promise((ok, ko) => {
       const richiesta = indexedDB.open(nomeDb, 1);
@@ -41,10 +42,10 @@ export function memoriaIndexedDB(nomeDb = 'raccoglitore-idee') {
 
   return {
     async leggi() {
-      return (await operazione('readonly', (s) => s.get('coda'))) ?? [];
+      return (await operazione('readonly', (s) => s.get(chiave))) ?? [];
     },
     async scrivi(valore) {
-      await operazione('readwrite', (s) => s.put(valore, 'coda'));
+      await operazione('readwrite', (s) => s.put(valore, chiave));
     },
   };
 }

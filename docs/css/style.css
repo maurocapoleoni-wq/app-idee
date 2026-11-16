@@ -38,7 +38,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* Barra in alto */
 .barra { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
-.barra h1 { font-size: 18px; font-weight: 500; margin: 0; flex: 1; }
+.barra h1 { font-size: 18px; font-weight: 500; margin: 0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .icona-btn { background: none; border: none; padding: 8px; color: var(--testo-2); display: inline-flex; }
 .icona-btn svg { width: 24px; height: 24px; }
 
@@ -127,3 +127,23 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .esito.errore { color: #f09595; }
 
 .azioni { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+
+/* Conversazione */
+.chat { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.chat li { max-width: 85%; padding: 10px 12px; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat .app { background: var(--superficie); align-self: flex-start; border-bottom-left-radius: 4px; }
+.chat .utente { background: var(--viola-scuro); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.chat .pensa { color: var(--testo-3); font-style: italic; background: none; }
+.avviso {
+  background: rgba(186, 117, 23, .15); color: #efb563; border-radius: 10px; padding: 10px 12px; margin-top: 12px;
+  font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+#mic { margin-top: 20px; }
+.etichetta-mic { text-align: center; color: var(--viola-chiaro); font-size: 15px; margin-top: 8px; }
+.risposta { display: flex; gap: 8px; align-items: flex-end; margin-top: 12px; }
+.risposta textarea {
+  flex: 1; min-width: 0; resize: vertical; background: var(--superficie); border: 1px solid #333; border-radius: 16px;
+  padding: 10px 14px; color: var(--testo); font: inherit;
+}
+.pillola.evidenzia { box-shadow: 0 0 0 3px rgba(29, 158, 117, .45); }
+.banner-esempi { background: var(--superficie-2); border-radius: 10px; padding: 8px 12px; color: var(--testo-2); font-size: 13px; margin-bottom: 10px; }

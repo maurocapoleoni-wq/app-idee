@@ -26,5 +26,11 @@ Cambia solo `stato.json`, quindi lo storico dell'idea non si spezza. `statoPrece
 ## 2026-11-16 · setup — Coda offline: si ferma al primo errore
 Inviare in ordine evita che una versione vecchia di un file arrivi dopo una nuova. Lo stesso file in attesa viene aggiornato, non duplicato.
 
+## 2026-11-16 · passo 1 — L'idea nasce dopo la prima risposta di Claude
+Il dialogo ha una chiave locale da subito, ma l'idea (e quindi la cartella nella cassetta) si crea dopo il primo tentativo di chiamare Claude. Così il nome della cartella usa il titolo di Claude e non le prime parole dettate. Se Claude non risponde, si usa un titolo provvisorio: la risposta non resta mai fuori dalla cassetta. Il titolo può cambiare dopo, l'id no.
+
+## 2026-11-16 · passo 1 — Telefono prima di tutto
+Ogni risposta va prima nell'archivio locale (IndexedDB, chiave `dialoghi`), poi nella coda, poi su GitHub. Anche il testo dettato ma non inviato resta come bozza in `localStorage`. Un `TypeError` da `fetch` vale come "niente rete", anche quando `navigator.onLine` dice il contrario.
+
 ## 2026-11-16 · hook — Guardrail in Node, registrati solo in locale
 Gli script sono in Node perché girano allo stesso modo su Windows e Node c'è già. La registrazione sta in `settings.local.json`, quindi non finisce nel repo pubblico. L'hook della regola 6 sta invece nell'intestazione della skill `imposta-idee`: la skill gira da cartelle diverse da questo progetto e un hook di progetto non la coprirebbe. Dettagli in `.claude/HOOKS_DECISIONS.md`.

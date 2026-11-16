@@ -1,16 +1,18 @@
 // Pagina di approfondimento di un'idea: scheda, storico, miglioria, azioni.
 // Nel setup è navigabile ma le azioni arrivano nei passi successivi.
 
-import { STATI } from '../idee.js';
+import { STATI, cambiaStato } from '../idee.js';
 import { esc, ICONE } from './dom.js';
 import { badge } from './stile-stati.js';
+import { schedaHtml } from './scheda.js';
 
 function data(isoString) {
   return new Date(isoString).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
 }
 
-export function mostra(radice, { stato, vai, parametri }) {
+export function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   const idea = stato.idee.find((i) => i.id === parametri.id);
+  const dialogo = stato.dialoghi.find((d) => d.idea?.id === parametri.id);
   if (!idea) {
     vai('home');
     return;
@@ -30,8 +32,12 @@ export function mostra(radice, { stato, vai, parametri }) {
 
     <div class="riquadro">
       <h2>Scheda attuale · versione ${idea.versione}</h2>
-      <p class="nota">La scheda verrà letta dalla cassetta su GitHub.</p>
+      ${dialogo ? schedaHtml(dialogo.scheda) : '<p class="nota">Idea d\'esempio: non ha una scheda.</p>'}
     </div>
+
+    ${dialogo && idea.stato === STATI.PRONTA ? `
+      <div class="azioni"><button class="pillola grigia" id="riapri">Continua la conversazione</button></div>
+      <p class="nota" style="text-align:center">È pronta: a casa la skill imposta-idee la trasforma in un progetto.</p>` : ''}
 
     <div class="riquadro">
       <h2>Storico</h2>
@@ -50,4 +56,8 @@ export function mostra(radice, { stato, vai, parametri }) {
     <p class="nota" style="text-align:center">Condividi, archivio e cestino arrivano nei prossimi passi di sviluppo.</p>
   `;
   radice.querySelector('[data-azione="indietro"]').onclick = () => vai('home');
+  radice.querySelector('#riapri')?.addEventListener('click', async () => {
+    await salvaDialogo({ ...dialogo, idea: cambiaStato(dialogo.idea, STATI.IN_DISCUSSIONE) });
+    vai('conversazione', { chiave: dialogo.chiave });
+  });
 }

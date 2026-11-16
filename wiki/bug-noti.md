@@ -2,7 +2,11 @@
 
 Formato di ogni voce: data · commit — problema, causa, soluzione.
 
-_Nessun bug registrato finora._
+## 2026-11-16 · Impostazioni — "Not Found" con il token giusto
+Problema: "Verifica GitHub" rispondeva 404 anche con il token corretto. Causa: errore di battitura nel campo Utente GitHub sul telefono; in più la verifica usava i dati salvati, non quelli visibili. Soluzione: la verifica salva prima i campi, i campi non hanno correzione automatica e 401/403/404 hanno messaggi espliciti (`spiegaErrore`).
+
+## 2026-11-16 · Service worker — non si registra nel browser integrato
+Nel browser di Claude Code su `127.0.0.1` la registrazione fallisce ("unknown error when fetching the script"). Sul sito vero (GitHub Pages, https) si attiva regolarmente: non è un bug dell'app.
 
 ## Da tenere d'occhio
 - Il riconoscimento vocale (`SpeechRecognition`) funziona bene su Chrome per Android, mentre su altri browser è limitato o assente. Da verificare sul telefono reale al passo 1.

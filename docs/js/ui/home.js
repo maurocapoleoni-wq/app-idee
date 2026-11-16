@@ -1,6 +1,6 @@
 // Schermata principale: microfono, campo di testo, schede e lista 4 per pagina.
 
-import { SCHEDE, inScheda, ordinaPerRecenti, pagina } from '../idee.js';
+import { SCHEDE, STATI, inScheda, ordinaPerRecenti, pagina } from '../idee.js';
 import { esc, ICONE } from './dom.js';
 import { STILE_STATO, badge } from './stile-stati.js';
 
@@ -49,7 +49,7 @@ export function mostra(radice, { stato, vai }) {
       <span class="anello">${ICONE.microfono}</span>
     </button>
     <div class="etichetta-occhio">Parla</div>
-    <p class="sottotitolo">Tieni premuto e racconta una nuova idea</p>
+    <p class="sottotitolo">Tocca e racconta una nuova idea</p>
 
     <form class="riga-input" id="form-testo">
       <input id="testo" placeholder="…oppure scrivi qui" autocomplete="off" aria-label="Scrivi una nuova idea">
@@ -62,6 +62,7 @@ export function mostra(radice, { stato, vai }) {
         .join('')}
     </nav>
 
+    ${stato.esempi ? '<p class="banner-esempi">Queste sono idee d\'esempio: spariscono appena salvi la tua prima idea.</p>' : ''}
     <div class="riga-titolo"><span>Le tue idee</span><span>Pagina ${p.numero} di ${p.totalePagine}</span></div>
     ${p.elementi.length ? `<ul class="lista">${p.elementi.map(schedaIdea).join('')}</ul>` : `<p class="vuota">${VUOTE[stato.scheda]}</p>`}
 
@@ -92,6 +93,11 @@ export function mostra(radice, { stato, vai }) {
     };
   });
   radice.querySelectorAll('[data-id]').forEach((b) => {
-    b.onclick = () => vai('idea', { id: b.dataset.id });
+    b.onclick = () => {
+      // Un'idea ancora in discussione riapre la conversazione; le altre la pagina dell'idea.
+      const dialogo = stato.dialoghi.find((d) => d.idea?.id === b.dataset.id);
+      if (dialogo?.idea.stato === STATI.IN_DISCUSSIONE) vai('conversazione', { chiave: dialogo.chiave });
+      else vai('idea', { id: b.dataset.id });
+    };
   });
 }
