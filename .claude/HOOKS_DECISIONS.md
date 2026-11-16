@@ -37,6 +37,7 @@ Per vedere cosa è attivo: `/hooks` in Claude Code da terminale. Gli hook si car
 - **Script:** `pc/skill/imposta-idee/verifica_cartelle.mjs`, richiamato da `$HOME/.claude/skills/imposta-idee/`.
 - **Cosa fa:** blocca le scritture fuori da `C:\Users\Mauro\Claude projects\` (e sulla cartella stessa); chiede conferma se un `Write` sostituirebbe per intero un file esistente.
 - **Perché:** la skill gira da cartelle diverse da questo progetto, quindi un hook di progetto non la proteggerebbe. Nell'intestazione della skill vale ovunque, ma solo per lei.
+- **Verificato dal vivo (2026-11-16):** dopo aver usato la skill, ha bloccato una scrittura nella cartella temporanea. Resta attivo **per il resto della sessione**, non solo mentre la skill lavora: dopo `imposta-idee` conviene aprire una sessione nuova per altri lavori.
 - **Limiti:** si attiva solo dopo aver copiato la skill in `~/.claude/skills/imposta-idee/`. Non controlla cartelle create da comandi (`mkdir`, `git clone`): per quelli vale l'istruzione scritta nella skill.
 - **Disattivare:** togliere il blocco `hooks:` dall'intestazione di `SKILL.md` (anche nella copia installata).
 
