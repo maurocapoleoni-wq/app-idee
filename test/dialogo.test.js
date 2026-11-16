@@ -2,7 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   nuovoDialogo, aggiungiMessaggio, attendeDomanda, normalizzaRisposta, unisciScheda,
-  titoloProvvisorio, idUnico, sezioniMancanti, assicuraIdea, applicaRisposta, salvataggiDelDialogo, schedaVuota,
+  titoloProvvisorio, idUnico, sezioniMancanti, assicuraIdea, applicaRisposta, salvataggioDelDialogo, schedaVuota,
+  iniziaMiglioria, aggiungiMessaggioMiglioria, attendeDomandaMiglioria, normalizzaRispostaMiglioria,
+  applicaRispostaMiglioria, salvaMiglioria,
 } from '../docs/js/dialogo.js';
 import { cambiaStato, STATI } from '../docs/js/idee.js';
 import { creaArchivio } from '../docs/js/archivio.js';
@@ -115,22 +117,73 @@ test('applicaRisposta aggiunge la domanda, aggiorna scheda e titolo ma non l\'id
   assert.equal(applicaRisposta(d, risposta({ completa: true, titolo: '' }), DOPO).idea.titolo, 'Promemoria spesa');
 });
 
-test('salvataggiDelDialogo: niente file senza idea, poi stato, scheda e conversazione', () => {
+test('salvataggioDelDialogo: niente senza idea, poi un commit con stato, scheda e conversazione', () => {
   const vuoto = aggiungiMessaggio(nuovoDialogo('k1'), 'utente', 'ciao', ORA);
-  assert.deepEqual(salvataggiDelDialogo(vuoto), []);
+  assert.equal(salvataggioDelDialogo(vuoto), null);
 
   let d = applicaRisposta(assicuraIdea(vuoto, { titolo: 'Spesa', ora: ORA }), risposta(), DOPO);
-  const file = salvataggiDelDialogo(d);
-  assert.deepEqual(file.map((f) => f.percorso), [
+  const s = salvataggioDelDialogo(d);
+  assert.equal(s.chiave, '2026-11-16-spesa');
+  assert.deepEqual(s.files.map((f) => f.percorso), [
     '2026-11-16-spesa/stato.json', '2026-11-16-spesa/scheda.md', '2026-11-16-spesa/conversazione.md',
   ]);
-  assert.match(file[0].messaggio, /^Idea in discussione: Promemoria spesa \(v1\)$/);
-  assert.match(file[1].contenuto, /Dimentico cosa comprare/);
-  assert.match(file[2].contenuto, /### Tu · 2026-11-16 10:30\n\nciao/);
+  assert.equal(s.messaggio, 'Idea in discussione: Promemoria spesa (v1)');
+  assert.match(s.files[1].contenuto, /Dimentico cosa comprare/);
+  assert.match(s.files[2].contenuto, /### Tu · 2026-11-16 10:30\n\nciao/);
 
   d = { ...d, idea: cambiaStato(d.idea, STATI.PRONTA, DOPO) };
-  assert.equal(JSON.parse(salvataggiDelDialogo(d)[0].contenuto).stato, 'pronta');
-  assert.match(salvataggiDelDialogo(d)[0].messaggio, /^Idea pronta:/);
+  assert.equal(JSON.parse(salvataggioDelDialogo(d).files[0].contenuto).stato, 'pronta');
+  assert.match(salvataggioDelDialogo(d).messaggio, /^Idea pronta:/);
+});
+
+function ideaImpostata() {
+  let d = aggiungiMessaggio(nuovoDialogo('k1'), 'utente', 'una app per la spesa', ORA);
+  d = applicaRisposta(assicuraIdea(d, { titolo: 'Spesa', ora: ORA }), risposta(), ORA);
+  return { ...d, idea: { ...d.idea, stato: STATI.IMPOSTATA } };
+}
+
+test('una miglioria: bozza, domande, poi versione 2 in attesa con il suo file', () => {
+  let d = iniziaMiglioria(ideaImpostata());
+  assert.deepEqual(d.bozzaMiglioria.messaggi, []);
+  assert.equal(iniziaMiglioria(d), d);
+  d = aggiungiMessaggioMiglioria(d, 'utente', 'voglio le notifiche', ORA);
+  assert.equal(attendeDomandaMiglioria(d), true);
+  d = applicaRispostaMiglioria(d, normalizzaRispostaMiglioria({
+    domanda: 'Quando vuoi riceverle?', completa: false, titolo: 'Notifiche', descrizione: 'Avvisare quando…',
+  }), DOPO);
+  d = aggiungiMessaggioMiglioria(d, 'utente', 'il giorno prima', DOPO);
+  d = applicaRispostaMiglioria(d, normalizzaRispostaMiglioria({
+    domanda: 'Salvo la miglioria?', completa: true, titolo: '', descrizione: 'Notifica il giorno prima della spesa',
+  }), DOPO);
+  assert.equal(d.bozzaMiglioria.titolo, 'Notifiche'); // un titolo vuoto non cancella quello di prima
+  assert.equal(d.bozzaMiglioria.completa, true);
+
+  d = salvaMiglioria(d, DOPO);
+  assert.equal(d.bozzaMiglioria, null);
+  assert.equal(d.idea.versione, 2);
+  assert.equal(d.idea.stato, STATI.MIGLIORIA_IN_ATTESA);
+  assert.equal(d.migliorie[2].descrizione, 'Notifica il giorno prima della spesa');
+
+  const s = salvataggioDelDialogo(d);
+  assert.equal(s.messaggio, 'Nuova miglioria: Promemoria spesa (v2)');
+  const file = s.files.find((f) => f.percorso === '2026-11-16-spesa/migliorie/v2-notifiche.md');
+  assert.match(file.contenuto, /# Miglioria v2 — Notifiche/);
+  assert.match(file.contenuto, /Notifica il giorno prima della spesa/);
+  assert.match(file.contenuto, /## Conversazione[\s\S]*voglio le notifiche[\s\S]*il giorno prima/);
+});
+
+test('una miglioria senza risposte di Claude usa le parole dell\'utente', () => {
+  let d = iniziaMiglioria(ideaImpostata());
+  assert.throws(() => salvaMiglioria(d), /Racconta prima/);
+  d = salvaMiglioria(aggiungiMessaggioMiglioria(d, 'utente', 'aggiungere il tema scuro', ORA), DOPO);
+  assert.equal(d.idea.migliorie[0].titolo, 'Aggiungere il tema scuro');
+  assert.equal(d.migliorie[2].descrizione, 'aggiungere il tema scuro');
+});
+
+test('le migliorie arrivate dalla cassetta non vengono riscritte', () => {
+  const d = ideaImpostata();
+  const conRemota = { ...d, idea: { ...d.idea, versione: 2, migliorie: [{ versione: 2, slug: 'x', titolo: 'X', creata: ORA.toISOString(), applicata: null }] } };
+  assert.equal(salvataggioDelDialogo(conRemota).files.some((f) => f.percorso.includes('migliorie/')), false);
 });
 
 test("l'archivio locale salva, sostituisce e ritrova i dialoghi", async () => {

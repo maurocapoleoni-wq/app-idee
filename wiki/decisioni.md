@@ -32,5 +32,14 @@ Il dialogo ha una chiave locale da subito, ma l'idea (e quindi la cartella nella
 ## 2026-11-16 · passo 1 — Telefono prima di tutto
 Ogni risposta va prima nell'archivio locale (IndexedDB, chiave `dialoghi`), poi nella coda, poi su GitHub. Anche il testo dettato ma non inviato resta come bozza in `localStorage`. Un `TypeError` da `fetch` vale come "niente rete", anche quando `navigator.onLine` dice il contrario.
 
+## 2026-11-16 · passo 3 — Un commit per salvataggio (Git Data API)
+Con la Contents API ogni file era un commit: 8 commit per una conversazione di 4 risposte. Ora un salvataggio è un elemento di coda con tutti i file dell'idea e diventa un solo commit (ref → commit → tree con `base_tree` → commit → PATCH del ref senza force). Se il ramo è cambiato nel frattempo (push dal PC) si riparte dall'ultimo commit, fino a 3 volte: nulla viene sovrascritto alla cieca. In coda, due salvataggi della stessa idea si uniscono per file, così un file di miglioria non si perde.
+
+## 2026-11-16 · passo 3 — Il telefono rilegge la cassetta
+All'avvio, al ritorno della rete e dopo "Verifica GitHub", il telefono legge ogni `stato.json` e, solo per idee nuove o più recenti, `scheda.md` e `conversazione.md` (riletti da `leggiSchedaMd` / `leggiConversazioneMd`). Vince la data `aggiornata` più recente, tranne per le idee con salvataggi ancora in coda sul telefono: quelle non si toccano. Prima si invia la coda, poi si legge.
+
+## 2026-11-16 · passo 3 — Migliorie: bozza sul telefono, commit al salvataggio
+La conversazione sulla miglioria resta sul telefono (`bozzaMiglioria`) finché non si preme "Salva miglioria": solo allora nascono la versione nuova e il file `migliorie/vN-slug.md`, con descrizione e conversazione. Le migliorie arrivate dalla cassetta non vengono riscritte dal telefono.
+
 ## 2026-11-16 · hook — Guardrail in Node, registrati solo in locale
 Gli script sono in Node perché girano allo stesso modo su Windows e Node c'è già. La registrazione sta in `settings.local.json`, quindi non finisce nel repo pubblico. L'hook della regola 6 sta invece nell'intestazione della skill `imposta-idee`: la skill gira da cartelle diverse da questo progetto e un hook di progetto non la coprirebbe. Dettagli in `.claude/HOOKS_DECISIONS.md`.

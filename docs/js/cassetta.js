@@ -107,12 +107,61 @@ export function conversazioneMd(idea, messaggi = []) {
   return righe.join('\n');
 }
 
-export function migliorieMd(idea, miglioria, descrizione = '') {
-  return [
+export function migliorieMd(idea, miglioria, descrizione = '', messaggi = []) {
+  const parti = [
     `# Miglioria v${miglioria.versione} — ${miglioria.titolo}\n`,
     `Idea: ${idea.titolo} · creata ${formattaData(miglioria.creata)}\n`,
     sezione('Cosa cambia e perché', descrizione),
-  ].join('\n');
+  ];
+  if (messaggi.length) {
+    parti.push('## Conversazione\n');
+    for (const m of messaggi) {
+      const chi = NOMI_RUOLO[m.ruolo];
+      if (!chi) throw new Error(`Ruolo sconosciuto nella conversazione: ${m.ruolo}`);
+      parti.push(`### ${chi} · ${formattaData(m.ora)}\n\n${String(m.testo ?? '').trim()}\n`);
+    }
+  }
+  return parti.join('\n');
+}
+
+// --- Lettura dei file scritti sopra (il telefono rilegge la cassetta) ---
+
+const SEZIONI_SCHEDA = { Problema: 'problema', Utenti: 'utenti', Funzioni: 'funzioni', Piattaforma: 'piattaforma', Note: 'note' };
+
+export function leggiSchedaMd(testo) {
+  const scheda = { problema: '', utenti: '', funzioni: [], piattaforma: '', note: '' };
+  const blocchi = String(testo ?? '').replace(/\r\n/g, '\n').split(/^## /m).slice(1);
+  for (const blocco of blocchi) {
+    const a = blocco.indexOf('\n');
+    const titolo = (a === -1 ? blocco : blocco.slice(0, a)).trim();
+    const chiave = SEZIONI_SCHEDA[titolo];
+    if (!chiave) continue;
+    const corpo = (a === -1 ? '' : blocco.slice(a + 1)).trim();
+    if (!corpo || corpo === DA_DEFINIRE) continue;
+    scheda[chiave] = chiave === 'funzioni'
+      ? corpo.split('\n').map((r) => r.replace(/^\s*-\s+/, '').trim()).filter(Boolean)
+      : corpo;
+  }
+  return scheda;
+}
+
+const RUOLO_DA_NOME = { App: 'app', Tu: 'utente' };
+
+export function leggiConversazioneMd(testo) {
+  const messaggi = [];
+  const parti = String(testo ?? '').replace(/\r\n/g, '\n').split(/^### (App|Tu) · (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})\n/m);
+  // parti: [intestazione, chi, a, m, g, h, min, testo, chi, ...]
+  for (let i = 1; i + 6 < parti.length; i += 7) {
+    const [chi, a, m, g, h, min, corpo] = parti.slice(i, i + 7);
+    const testoMsg = corpo.trim();
+    if (!testoMsg) continue;
+    messaggi.push({
+      ruolo: RUOLO_DA_NOME[chi],
+      testo: testoMsg,
+      ora: new Date(Number(a), Number(m) - 1, Number(g), Number(h), Number(min)).toISOString(),
+    });
+  }
+  return messaggi;
 }
 
 export function messaggioCommit(idea, azione) {

@@ -1,8 +1,8 @@
 // Logica pura della conversazione con Haiku: messaggi, scheda, titolo e idea.
 // Nessun accesso a DOM, rete o memoria. Ogni funzione restituisce un nuovo oggetto.
 
-import { creaIdea, STATI } from './idee.js';
-import { fileDiSalvataggio, messaggioCommit } from './cassetta.js';
+import { creaIdea, aggiungiMiglioria, STATI } from './idee.js';
+import { fileDiSalvataggio, messaggioCommit, migliorieMd, percorsoMiglioria } from './cassetta.js';
 
 const CAMPI_TESTO = ['problema', 'utenti', 'piattaforma', 'note'];
 const RUOLI = new Set(['app', 'utente']);
@@ -120,11 +120,85 @@ export function applicaRisposta(dialogo, risposta, ora = new Date()) {
   return { ...d, idea, scheda: unisciScheda(d.scheda, risposta.scheda), completa: risposta.completa };
 }
 
-// File da mettere in coda per la cassetta. Senza idea non c'è ancora una cartella.
-export function salvataggiDelDialogo(dialogo) {
-  if (!dialogo.idea) return [];
-  const azione = dialogo.idea.stato === STATI.PRONTA ? 'Idea pronta' : 'Idea in discussione';
-  const messaggio = messaggioCommit(dialogo.idea, azione);
-  return fileDiSalvataggio(dialogo.idea, { scheda: dialogo.scheda, messaggi: dialogo.messaggi })
-    .map((f) => ({ ...f, messaggio }));
+// --- Migliorie: una breve conversazione su un'idea già impostata sul PC ---
+
+export function iniziaMiglioria(dialogo) {
+  if (dialogo.bozzaMiglioria) return dialogo;
+  return { ...dialogo, bozzaMiglioria: { messaggi: [], titolo: '', descrizione: '', completa: false } };
+}
+
+export function aggiungiMessaggioMiglioria(dialogo, ruolo, testo, ora = new Date()) {
+  if (!dialogo.bozzaMiglioria) throw new Error('Nessuna miglioria in corso');
+  if (!RUOLI.has(ruolo)) throw new Error(`Ruolo sconosciuto: ${ruolo}`);
+  const t = String(testo ?? '').trim();
+  if (!t) throw new Error('Il messaggio è vuoto');
+  const b = dialogo.bozzaMiglioria;
+  return { ...dialogo, bozzaMiglioria: { ...b, messaggi: [...b.messaggi, { ruolo, testo: t, ora: iso(ora) }] } };
+}
+
+export function attendeDomandaMiglioria(dialogo) {
+  return dialogo.bozzaMiglioria?.messaggi.at(-1)?.ruolo === 'utente';
+}
+
+export function normalizzaRispostaMiglioria(json) {
+  if (!json || typeof json !== 'object') throw new Error('Risposta di Claude non valida');
+  const domanda = comeTesto(json.domanda);
+  if (!domanda) throw new Error('Claude non ha fatto nessuna domanda');
+  return {
+    domanda,
+    completa: json.completa === true,
+    titolo: comeTesto(json.titolo).slice(0, 80),
+    descrizione: comeTesto(json.descrizione),
+  };
+}
+
+export function applicaRispostaMiglioria(dialogo, risposta, ora = new Date()) {
+  const d = aggiungiMessaggioMiglioria(dialogo, 'app', risposta.domanda, ora);
+  const b = d.bozzaMiglioria;
+  return {
+    ...d,
+    bozzaMiglioria: {
+      ...b,
+      titolo: risposta.titolo || b.titolo,
+      descrizione: risposta.descrizione || b.descrizione,
+      completa: risposta.completa,
+    },
+  };
+}
+
+// Trasforma la bozza in una miglioria vera: versione +1, stato "miglioria in attesa".
+export function salvaMiglioria(dialogo, ora = new Date()) {
+  const b = dialogo.bozzaMiglioria;
+  const primo = b?.messaggi.find((m) => m.ruolo === 'utente')?.testo;
+  if (!primo) throw new Error('Racconta prima la miglioria');
+  const titolo = b.titolo || titoloProvvisorio(primo);
+  const idea = aggiungiMiglioria(dialogo.idea, { titolo, ora });
+  const descrizione = b.descrizione || b.messaggi.filter((m) => m.ruolo === 'utente').map((m) => m.testo).join('\n\n');
+  return {
+    ...dialogo,
+    idea,
+    migliorie: { ...(dialogo.migliorie ?? {}), [idea.versione]: { descrizione, messaggi: b.messaggi } },
+    bozzaMiglioria: null,
+  };
+}
+
+const AZIONI = {
+  [STATI.IN_DISCUSSIONE]: 'Idea in discussione',
+  [STATI.PRONTA]: 'Idea pronta',
+  [STATI.MIGLIORIA_IN_ATTESA]: 'Nuova miglioria',
+};
+
+// Un salvataggio da mettere in coda = un commit con tutti i file dell'idea.
+// Senza idea non c'è ancora una cartella nella cassetta.
+export function salvataggioDelDialogo(dialogo) {
+  if (!dialogo.idea) return null;
+  const { idea } = dialogo;
+  const files = fileDiSalvataggio(idea, { scheda: dialogo.scheda, messaggi: dialogo.messaggi });
+  for (const m of idea.migliorie) {
+    const locale = dialogo.migliorie?.[m.versione];
+    // Le migliorie arrivate dalla cassetta hanno già il loro file: non si riscrivono.
+    if (locale) files.push({ percorso: percorsoMiglioria(idea.id, m), contenuto: migliorieMd(idea, m, locale.descrizione, locale.messaggi) });
+  }
+  const azione = AZIONI[idea.stato] ?? 'Aggiorna idea';
+  return { chiave: idea.id, files, messaggio: messaggioCommit(idea, azione) };
 }

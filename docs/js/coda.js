@@ -50,26 +50,39 @@ export function memoriaIndexedDB(nomeDb = 'raccoglitore-idee', chiave = 'coda') 
   };
 }
 
+// Un elemento = un salvataggio = un commit: { chiave, files: [{ percorso, contenuto }], messaggio }.
+// La chiave è di solito l'id dell'idea. Accetta anche il vecchio formato a file singolo.
+function normalizza(el) {
+  if (Array.isArray(el.files)) return { revisione: 0, ...el };
+  return { ...el, chiave: el.percorso, files: [{ percorso: el.percorso, contenuto: el.contenuto }], revisione: 0 };
+}
+
 export function creaCoda(memoria, { ora = () => new Date() } = {}) {
   let invioInCorso = null;
 
-  async function aggiungi({ percorso, contenuto, messaggio }) {
-    if (!percorso || typeof contenuto !== 'string') {
-      throw new Error('Elemento di coda non valido: servono percorso e contenuto');
-    }
-    const lista = await memoria.leggi();
-    const esistente = lista.find((e) => e.percorso === percorso);
+  const leggi = async () => (await memoria.leggi()).map(normalizza);
+
+  async function aggiungi(nuovo) {
+    const { chiave, files, messaggio } = normalizza(nuovo);
+    const validi = chiave && files.length && files.every((f) => f.percorso && typeof f.contenuto === 'string');
+    if (!validi) throw new Error('Elemento di coda non valido: servono chiave, percorsi e contenuti');
+    const lista = await leggi();
+    const esistente = lista.find((e) => e.chiave === chiave);
     if (esistente) {
-      // Stesso file già in attesa: vale l'ultima versione, la posizione resta.
-      esistente.contenuto = contenuto;
+      // Stessa idea già in attesa: si uniscono i file (vince la versione più nuova), la posizione resta.
+      const perPercorso = new Map(esistente.files.map((f) => [f.percorso, f]));
+      for (const f of files) perPercorso.set(f.percorso, { percorso: f.percorso, contenuto: f.contenuto });
+      esistente.files = [...perPercorso.values()];
       esistente.messaggio = messaggio;
       esistente.aggiunto = ora().toISOString();
+      esistente.revisione += 1;
     } else {
       lista.push({
         id: crypto.randomUUID(),
-        percorso,
-        contenuto,
+        chiave,
+        files: files.map((f) => ({ percorso: f.percorso, contenuto: f.contenuto })),
         messaggio,
+        revisione: 0,
         aggiunto: ora().toISOString(),
         tentativi: 0,
         ultimoErrore: null,
@@ -79,7 +92,7 @@ export function creaCoda(memoria, { ora = () => new Date() } = {}) {
   }
 
   async function elementi() {
-    return memoria.leggi();
+    return leggi();
   }
 
   async function inAttesa() {
@@ -91,14 +104,14 @@ export function creaCoda(memoria, { ora = () => new Date() } = {}) {
     let inviati = 0;
     let errore = null;
     for (;;) {
-      const lista = await memoria.leggi();
+      const lista = await leggi();
       const primo = lista[0];
       if (!primo) break;
       try {
         await inviaFn(primo);
       } catch (e) {
         errore = e;
-        const aggiornata = await memoria.leggi();
+        const aggiornata = await leggi();
         const el = aggiornata.find((x) => x.id === primo.id);
         if (el) {
           el.tentativi += 1;
@@ -107,10 +120,10 @@ export function creaCoda(memoria, { ora = () => new Date() } = {}) {
         }
         break;
       }
-      const aggiornata = await memoria.leggi();
+      const aggiornata = await leggi();
       const el = aggiornata.find((x) => x.id === primo.id);
-      // Se durante l'invio è arrivata una versione più nuova dello stesso file, resta in coda.
-      if (el && el.contenuto === primo.contenuto && el.messaggio === primo.messaggio) {
+      // Se durante l'invio è arrivata una versione più nuova della stessa idea, resta in coda.
+      if (el && el.revisione === primo.revisione) {
         await memoria.scrivi(aggiornata.filter((x) => x.id !== primo.id));
       }
       inviati += 1;

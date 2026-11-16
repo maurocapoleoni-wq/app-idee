@@ -4,15 +4,18 @@ import { leggiConfig, campiMancanti } from './config.js';
 import { creaCoda, memoriaIndexedDB } from './coda.js';
 import { creaArchivio } from './archivio.js';
 import { creaGithub } from './github.js';
-import { assicuraIdea, salvataggiDelDialogo } from './dialogo.js';
+import { assicuraIdea, salvataggioDelDialogo } from './dialogo.js';
+import { leggiStatoJson, leggiSchedaMd, leggiConversazioneMd } from './cassetta.js';
+import { serveDettaglio, unisciDaCassetta } from './sincronia.js';
 import { ideeEsempio } from './esempi.js';
 import { SCHEDE } from './idee.js';
 import * as home from './ui/home.js';
 import * as conversazione from './ui/conversazione.js';
 import * as idea from './ui/idea.js';
 import * as impostazioni from './ui/impostazioni.js';
+import * as miglioria from './ui/miglioria.js';
 
-const SCHERMATE = { home, conversazione, idea, impostazioni };
+const SCHERMATE = { home, conversazione, idea, impostazioni, miglioria };
 
 const stato = {
   config: leggiConfig(),
@@ -39,15 +42,22 @@ async function ricaricaIdee() {
 }
 
 // Regola 2: prima il telefono (archivio), poi la coda, poi GitHub.
-async function salvaDialogo(dialogo) {
+// Con { cassetta: false } resta solo sul telefono (es. bozza di una miglioria).
+async function salvaDialogo(dialogo, { cassetta = true } = {}) {
   await archivio.salva(dialogo);
-  for (const file of salvataggiDelDialogo(dialogo)) await stato.coda.aggiungi(file);
+  const salvataggio = cassetta ? salvataggioDelDialogo(dialogo) : null;
+  if (salvataggio) await stato.coda.aggiungi(salvataggio);
   await ricaricaIdee();
   aggiornaIndicatore();
-  inviaCoda();
+  if (salvataggio) inviaCoda();
 }
 
 let ultimoErrore = null;
+
+function github() {
+  const { github_token: token, github_owner: owner, github_repo: repo } = stato.config;
+  return creaGithub({ token, owner, repo });
+}
 
 async function inviaCoda() {
   if (campiMancanti(stato.config).length || !navigator.onLine) {
@@ -55,9 +65,8 @@ async function inviaCoda() {
     return;
   }
   try {
-    const { github_token: token, github_owner: owner, github_repo: repo } = stato.config;
-    const gh = creaGithub({ token, owner, repo });
-    const esito = await stato.coda.invia((el) => gh.scriviFile(el.percorso, el.contenuto, el.messaggio));
+    const gh = github();
+    const esito = await stato.coda.invia((el) => gh.scriviCommit(el.files, el.messaggio));
     ultimoErrore = esito.errore ?? null;
   } catch (e) {
     ultimoErrore = e;
@@ -65,10 +74,62 @@ async function inviaCoda() {
   aggiornaIndicatore();
 }
 
+// Rilegge la cassetta: stati cambiati dal PC, idee salvate da un altro browser.
+let sincronizzando = null;
+function sincronizza() {
+  if (sincronizzando || campiMancanti(stato.config).length || !navigator.onLine) return sincronizzando;
+  sincronizzando = (async () => {
+    let cambiate = 0;
+    try {
+      const gh = github();
+      const cartelle = await gh.elencaCartelle();
+      const inCoda = new Set((await stato.coda.elementi()).map((e) => e.chiave));
+      const remote = await Promise.all(cartelle.map(async (id) => {
+        try {
+          const f = await gh.leggiFile(`${id}/stato.json`);
+          return f ? leggiStatoJson(f.contenuto, id) : null;
+        } catch {
+          return null; // cartella che non è un'idea (o stato.json rovinato): si ignora
+        }
+      }));
+      for (const idea of remote.filter(Boolean)) {
+        let scheda;
+        let messaggi;
+        if (serveDettaglio(stato.dialoghi, idea)) {
+          const [s, c] = await Promise.all([
+            gh.leggiFile(`${idea.id}/scheda.md`),
+            gh.leggiFile(`${idea.id}/conversazione.md`),
+          ]);
+          scheda = s ? leggiSchedaMd(s.contenuto) : undefined;
+          messaggi = c ? leggiConversazioneMd(c.contenuto) : undefined;
+        }
+        // Si rilegge l'archivio appena prima di scrivere: un salvataggio locale nel frattempo vince.
+        const aggiornato = unisciDaCassetta(await archivio.tutti(), { idea, scheda, messaggi }, { inCoda });
+        if (aggiornato) {
+          await archivio.salva(aggiornato);
+          cambiate += 1;
+        }
+      }
+    } catch {
+      /* lettura non riuscita: si riprova al prossimo avvio o al ritorno della rete */
+    } finally {
+      sincronizzando = null;
+    }
+    if (cambiate) {
+      await ricaricaIdee();
+      if (corrente.nome === 'home') vai('home');
+    }
+  })();
+  return sincronizzando;
+}
+
+const corrente = { nome: null };
+
 function vai(nome, parametri = {}) {
   const schermata = SCHERMATE[nome] ?? home;
+  corrente.nome = SCHERMATE[nome] ? nome : 'home';
   contenitore.innerHTML = '';
-  schermata.mostra(contenitore, { stato, vai, parametri, aggiornaIndicatore, salvaDialogo, inviaCoda });
+  schermata.mostra(contenitore, { stato, vai, parametri, aggiornaIndicatore, salvaDialogo, inviaCoda, sincronizza });
   aggiornaIndicatore();
   window.scrollTo(0, 0);
 }
@@ -105,7 +166,10 @@ async function aggiornaIndicatore() {
   }
 }
 
-window.addEventListener('online', inviaCoda);
+window.addEventListener('online', async () => {
+  await inviaCoda(); // prima si manda ciò che il telefono ha in sospeso, poi si rilegge
+  sincronizza();
+});
 window.addEventListener('offline', aggiornaIndicatore);
 // Riprova periodica: copre reti instabili e errori temporanei di GitHub.
 setInterval(async () => {
@@ -129,7 +193,8 @@ async function avvia() {
   }
   vai(campiMancanti(stato.config).length && !localStorage.getItem('raccoglitore-idee:visto') ? 'impostazioni' : 'home');
   localStorage.setItem('raccoglitore-idee:visto', '1');
-  inviaCoda();
+  await inviaCoda();
+  sincronizza();
 }
 
 avvia();

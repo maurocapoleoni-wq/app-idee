@@ -94,6 +94,48 @@ export function creaGithub({ token, owner, repo, fetch: f = globalThis.fetch?.bi
     throw new ErroreGithub(`Salvataggio di ${percorso} non riuscito`, 409);
   }
 
+  async function leggiJson(risposta, cosa) {
+    if (!risposta.ok) throw await errore(risposta, cosa);
+    return risposta.json();
+  }
+
+  let ramo = null;
+  async function ramoPredefinito() {
+    if (!ramo) ramo = (await leggiJson(await chiama('GET', base), 'la lettura del repository')).default_branch || 'main';
+    return ramo;
+  }
+
+  // Scrive più file in UN solo commit (Git Data API). Se nel frattempo il ramo è
+  // cambiato (es. il PC ha fatto push), riparte dall'ultimo commit: niente viene sovrascritto alla cieca.
+  async function scriviCommit(files, messaggio) {
+    if (!Array.isArray(files) || !files.length) return { invariato: true };
+    for (const file of files) {
+      codificaPercorso(file.percorso);
+      if (typeof file.contenuto !== 'string') throw new Error(`Contenuto non valido per ${file.percorso}`);
+    }
+    const r = await ramoPredefinito();
+    for (let tentativo = 1; tentativo <= 3; tentativo += 1) {
+      const ref = await leggiJson(await chiama('GET', `${base}/git/ref/heads/${r}`), 'la lettura del ramo');
+      const padre = ref.object.sha;
+      const ultimo = await leggiJson(await chiama('GET', `${base}/git/commits/${padre}`), "la lettura dell'ultimo commit");
+      const albero = await leggiJson(await chiama('POST', `${base}/git/trees`, {
+        base_tree: ultimo.tree.sha,
+        tree: files.map((file) => ({ path: file.percorso, mode: '100644', type: 'blob', content: file.contenuto })),
+      }), 'la preparazione dei file');
+      if (albero.sha === ultimo.tree.sha) return { invariato: true };
+      const commit = await leggiJson(await chiama('POST', `${base}/git/commits`, {
+        message: messaggio || 'Aggiorna la cassetta',
+        tree: albero.sha,
+        parents: [padre],
+      }), 'la creazione del commit');
+      const aggiornamento = await chiama('PATCH', `${base}/git/refs/heads/${r}`, { sha: commit.sha, force: false });
+      if (aggiornamento.ok) return { invariato: false, commit: commit.sha };
+      if ((aggiornamento.status === 409 || aggiornamento.status === 422) && tentativo < 3) continue;
+      throw await errore(aggiornamento, "l'aggiornamento del ramo");
+    }
+    throw new ErroreGithub('Salvataggio non riuscito: il ramo continua a cambiare', 409);
+  }
+
   async function elencaCartelle() {
     const r = await chiama('GET', `${base}/contents/`);
     if (r.status === 404) return [];
@@ -113,5 +155,5 @@ export function creaGithub({ token, owner, repo, fetch: f = globalThis.fetch?.bi
     };
   }
 
-  return { leggiFile, scriviFile, elencaCartelle, verificaAccesso };
+  return { leggiFile, scriviFile, scriviCommit, elencaCartelle, verificaAccesso };
 }

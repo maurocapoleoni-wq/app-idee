@@ -17,7 +17,7 @@ export function spiegaErrore(err, config) {
   return err.message;
 }
 
-export function mostra(radice, { stato, vai, inviaCoda }) {
+export function mostra(radice, { stato, vai, inviaCoda, sincronizza }) {
   const config = stato.config;
   radice.innerHTML = `
     <header class="barra">
@@ -77,7 +77,8 @@ export function mostra(radice, { stato, vai, inviaCoda }) {
         mostraEsito(`${info.nome} è raggiungibile ma il token non ha il permesso di scrittura.`, 'errore');
       } else {
         mostraEsito(`Collegato a ${info.nome} (privato).`, 'ok');
-        inviaCoda();
+        await inviaCoda();
+        sincronizza?.();
       }
     } catch (err) {
       mostraEsito(spiegaErrore(err, stato.config), 'errore');

@@ -8,9 +8,10 @@ import {
 } from '../dialogo.js';
 import { cambiaStato, STATI } from '../idee.js';
 import { creaClaude } from '../claude.js';
-import { voceSupportata, creaRiconoscimento, leggiAdAltaVoce } from '../voce.js';
+import { leggiAdAltaVoce } from '../voce.js';
 import { esc, ICONE } from './dom.js';
 import { schedaHtml } from './scheda.js';
+import { collegaDettatura } from './dettatura.js';
 
 const PREFISSO = 'raccoglitore-idee:';
 const BENVENUTO = 'Raccontami la tua idea: che app ti piacerebbe avere, e per fare cosa?';
@@ -20,11 +21,8 @@ const leggiPreferenzaVoce = () => localStorage.getItem(`${PREFISSO}leggi-domande
 export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   let dialogo = (parametri.chiave && stato.dialoghi.find((d) => d.chiave === parametri.chiave))
     || nuovoDialogo(crypto.randomUUID());
-  const chiaveBozza = `${PREFISSO}bozza:${dialogo.chiave}`;
   let occupato = false;
   let avviso = '';
-  let ascolto = null;
-  let inviaAllaFine = false;
   let mancantiDaConfermare = null;
   let leggiDomande = leggiPreferenzaVoce();
 
@@ -60,8 +58,6 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   `;
 
   const $ = (sel) => radice.querySelector(sel);
-  const campo = $('#campo');
-  campo.value = localStorage.getItem(chiaveBozza) ?? '';
 
   function disegna() {
     $('#titolo').textContent = dialogo.idea?.titolo ?? 'Nuova idea';
@@ -89,8 +85,6 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     pronta.disabled = occupato || !dialogo.idea;
     pronta.classList.toggle('evidenzia', dialogo.completa);
     $('#invia').disabled = occupato;
-    $('#mic').classList.toggle('ascolta', Boolean(ascolto));
-    $('#etichetta-mic').textContent = ascolto ? 'Ti ascolto… tocca per inviare' : 'Tocca per parlare';
     $('#voce').innerHTML = leggiDomande ? ICONE.altoparlante : ICONE.muto;
     $('#voce').setAttribute('aria-label', leggiDomande ? 'Non leggere le domande ad alta voce' : 'Leggi le domande ad alta voce');
     $('#chat').lastElementChild?.scrollIntoView({ block: 'nearest' });
@@ -139,73 +133,28 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     if (!t || occupato) return;
     mancantiDaConfermare = null;
     dialogo = aggiungiMessaggio(dialogo, 'utente', t);
-    campo.value = '';
-    localStorage.removeItem(chiaveBozza);
     await salva(); // prima il telefono, poi Claude
     disegna();
     await chiediDomanda();
   }
 
-  function avviaAscolto() {
-    if (!voceSupportata()) {
-      avviso = 'Questo browser non supporta il microfono: scrivi la risposta qui sotto (su Android usa Chrome).';
-      disegna();
-      return;
-    }
-    globalThis.speechSynthesis?.cancel();
-    let dettato = campo.value.trim() ? `${campo.value.trim()} ` : '';
-    inviaAllaFine = false;
-    try {
-      ascolto = creaRiconoscimento({
-        onParziale: (p) => { campo.value = dettato + p; },
-        onFinale: (f) => {
-          dettato += `${f} `;
-          campo.value = dettato;
-          localStorage.setItem(chiaveBozza, campo.value);
-        },
-        onErrore: (e) => {
-          if (/no-speech|aborted/.test(e.message)) return;
-          avviso = /not-allowed|service-not-allowed/.test(e.message)
-            ? 'Il permesso del microfono è negato: abilitalo nelle impostazioni del browser per questo sito.'
-            : `${e.message}. Puoi scrivere la risposta qui sotto.`;
-        },
-        onFine: () => {
-          ascolto = null;
-          disegna();
-          if (inviaAllaFine) invia(campo.value);
-        },
-      });
-      ascolto.avvia();
-    } catch (e) {
-      ascolto = null;
-      avviso = e.message;
-    }
-    disegna();
-  }
+  const dettatura = collegaDettatura({
+    mic: $('#mic'),
+    etichetta: $('#etichetta-mic'),
+    campo: $('#campo'),
+    form: $('#form-risposta'),
+    chiaveBozza: `${PREFISSO}bozza:${dialogo.chiave}`,
+    libero: () => !occupato,
+    onInvia: invia,
+    onAvviso: (testo) => { avviso = testo; disegna(); },
+    onCambio: disegna,
+  });
 
-  $('#mic').onclick = () => {
-    if (ascolto) {
-      inviaAllaFine = true;
-      ascolto.ferma();
-    } else if (!occupato) {
-      avviaAscolto();
-    }
-  };
   $('#voce').onclick = () => {
     leggiDomande = !leggiDomande;
     localStorage.setItem(`${PREFISSO}leggi-domande`, leggiDomande ? '1' : '0');
     if (!leggiDomande) globalThis.speechSynthesis?.cancel();
     disegna();
-  };
-  campo.oninput = () => localStorage.setItem(chiaveBozza, campo.value);
-  $('#form-risposta').onsubmit = (e) => {
-    e.preventDefault();
-    if (ascolto) {
-      inviaAllaFine = true;
-      ascolto.ferma();
-    } else {
-      invia(campo.value);
-    }
   };
   async function segnaPronta() {
     if (!dialogo.idea || occupato) return;
@@ -225,7 +174,7 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
     $('#avviso').scrollIntoView({ block: 'center', behavior: 'smooth' });
   };
   const esci = () => {
-    ascolto?.ferma();
+    dettatura.ferma();
     globalThis.speechSynthesis?.cancel();
     vai('home');
   };
@@ -235,7 +184,7 @@ export async function mostra(radice, { stato, vai, parametri, salvaDialogo }) {
   if (parametri.testoIniziale && !dialogo.messaggi.length) {
     await invia(parametri.testoIniziale);
   } else if (parametri.avviaMicrofono) {
-    avviaAscolto(); // nello stesso tocco del pulsante in home: il browser lo permette
+    dettatura.avvia(); // nello stesso tocco del pulsante in home: il browser lo permette
   } else if (attendeDomanda(dialogo)) {
     avviso = "L'ultima risposta non ha ancora avuto una domanda.";
     disegna();

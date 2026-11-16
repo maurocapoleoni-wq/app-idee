@@ -36,6 +36,21 @@ Rispondi SOLO con un oggetto JSON, senza testo prima o dopo:
 }
 Lascia stringhe vuote o liste vuote solo per ciò di cui non si sa ancora niente.`;
 
+export const PROMPT_MIGLIORIA = `Sei l'assistente di un raccoglitore di idee per nuove app.
+L'idea qui sotto è già diventata un progetto sul PC dell'utente. Ora l'utente vuole migliorarla.
+Chiarisci la miglioria con UNA domanda alla volta, breve e concreta, in italiano:
+cosa deve cambiare, perché, e cosa deve succedere in pratica. Di solito bastano 1-3 domande.
+Non riproporre ciò che la scheda dice già. Se la trascrizione vocale è confusa, usa ciò che si capisce.
+
+Rispondi SOLO con un oggetto JSON, senza testo prima o dopo:
+{
+  "domanda": "la prossima domanda, oppure un riepilogo di una frase che chiede se salvare la miglioria",
+  "completa": false,
+  "titolo": "titolo breve della miglioria, massimo 6 parole",
+  "descrizione": "cosa cambia e perché, in modo concreto: la leggerà chi applica la miglioria al progetto"
+}
+"completa" è true quando è chiaro cosa cambiare.`;
+
 export const PROMPT_CONDIVIDI = {
   amico: `Trasforma la scheda di un'idea in un messaggio per un amico: tono informale ed entusiasta,
 breve, adatto a WhatsApp. Niente dettagli tecnici. Scrivi solo il messaggio, in italiano.`,
@@ -97,6 +112,14 @@ export function creaClaude({ apiKey, fetch: f = globalThis.fetch?.bind(globalThi
     return estraiJson(await chiedi({ modello, system: PROMPT_DOMANDE, testo }));
   }
 
+  async function prossimaDomandaMiglioria({ modello, schedaMarkdown, migliorieFatte = [], messaggi = [] }) {
+    const precedenti = migliorieFatte.length
+      ? `\n\nMigliorie già chieste:\n${migliorieFatte.map((m) => `- v${m.versione}: ${m.titolo}`).join('\n')}`
+      : '';
+    const testo = `Scheda dell'idea:\n${schedaMarkdown}${precedenti}\n\nConversazione sulla miglioria:\n${trascrizione(messaggi)}`;
+    return estraiJson(await chiedi({ modello, system: PROMPT_MIGLIORIA, testo }));
+  }
+
   // Usa SOLO la scheda: mai conversazioni o note interne (regola non negoziabile).
   async function componiMessaggio({ modello, schedaMarkdown, destinatario, richiesta = '' }) {
     const system = PROMPT_CONDIVIDI[destinatario];
@@ -109,5 +132,5 @@ export function creaClaude({ apiKey, fetch: f = globalThis.fetch?.bind(globalThi
     return estraiJson(await chiedi({ modello, system: PROMPT_ISPIRAZIONE, testo: schedaMarkdown, maxToken: 300 }));
   }
 
-  return { chiedi, prossimaDomanda, componiMessaggio, queryIspirazione };
+  return { chiedi, prossimaDomanda, prossimaDomandaMiglioria, componiMessaggio, queryIspirazione };
 }
