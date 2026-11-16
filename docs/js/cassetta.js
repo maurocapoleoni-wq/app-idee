@@ -56,12 +56,13 @@ export function leggiStatoJson(testo, id) {
     throw new Error(`Versione non valida in ${id}: ${dati.versione}`);
   }
   if (typeof dati.titolo !== 'string' || !dati.titolo.trim()) throw new Error(`Titolo mancante in ${id}`);
+  // Si conserva l'ordine dei campi del file: riscriverlo non deve sporcare il diff.
   return {
-    statoPrecedente: null,
-    etichette: [],
-    migliorie: [],
     ...dati,
     id, // la cartella è la fonte di verità per l'identificativo
+    statoPrecedente: dati.statoPrecedente ?? null,
+    etichette: dati.etichette ?? [],
+    migliorie: dati.migliorie ?? [],
   };
 }
 

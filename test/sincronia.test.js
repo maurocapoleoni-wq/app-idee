@@ -31,6 +31,12 @@ test("legge anche i file d'esempio della cassetta, anche con a capo Windows", ()
   assert.ok(leggiConversazioneMd(readFileSync(new URL('conversazione.md', base), 'utf8')).length > 0);
 });
 
+test("stato.json riletto e riscritto mantiene l'ordine dei campi", async () => {
+  const { statoJson, leggiStatoJson } = await import('../docs/js/cassetta.js');
+  const testo = statoJson(idea);
+  assert.equal(statoJson(leggiStatoJson(testo, idea.id)), testo);
+});
+
 const locale = (extra = {}) => ({
   chiave: 'k1', idea, scheda: { problema: 'locale', utenti: '', funzioni: [], piattaforma: '', note: '' },
   messaggi: [{ ruolo: 'utente', testo: 'ciao', ora: ORA.toISOString() }], migliorie: { 2: { descrizione: 'mia' } },
