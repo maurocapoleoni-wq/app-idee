@@ -45,8 +45,8 @@ Leggi ogni `*/stato.json` e raggruppa per `stato`:
 Mostra all'utente un elenco breve (titolo, versione, cosa c'è da fare) e chiedi su quali procedere.
 
 ### 3. Imposta un'idea pronta
-1. Leggi `scheda.md`, `conversazione.md`, `CLAUDE.md` (bozza) ed eventuale `ispirazione.md`.
-2. Proponi il nome della cartella: lo slug dell'idea senza data (es. `spesa-condivisa`). Verifica che non esista.
+1. Leggi `scheda.md`, `conversazione.md`, `CLAUDE.md` (bozza, se c'è) ed eventuale `ispirazione.md`.
+2. Proponi il nome della cartella ricavandolo dal **titolo attuale** in `stato.json` (es. "Assistente guidato per drammaturghi" → `assistente-drammaturghi`), non dal nome della cartella nella cassetta: quello nasce alla prima risposta e può essere provvisorio (es. `nuova-idea-da-definire`). Verifica che non esista e lascia che l'utente lo cambi.
 3. Crea la cartella con:
    - `PROGETTO.md`: la scheda, più le decisioni emerse dalla conversazione;
    - `CLAUDE.md`: partendo dalla bozza, con regole non negoziabili e definizione di fatto;
