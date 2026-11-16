@@ -1,4 +1,4 @@
-// Schermata principale: microfono, campo di testo, schede e lista 4 per pagina.
+// Schermata principale: microfono, campo di testo, schede e lista 3 per pagina.
 
 import { SCHEDE, STATI, inScheda, ordinaPerRecenti, pagina } from '../idee.js';
 import { esc, ICONE } from './dom.js';
@@ -28,8 +28,7 @@ function schedaIdea(idea) {
     <span class="quadro" style="background:${s.colore}">${s.icona}</span>
     <span>
       <span class="titolo-idea">${esc(idea.titolo)}</span><br>
-      <span class="data-idea">${quando(idea.aggiornata)}</span><br>
-      ${badge(idea.stato)}
+      <span class="riga-stato">${badge(idea.stato)} <span class="data-idea">${quando(idea.aggiornata)}</span></span>
     </span>
   </button></li>`;
 }
@@ -39,7 +38,9 @@ export function mostra(radice, { stato, vai }) {
   const p = pagina(visibili, stato.pagina);
   stato.pagina = p.numero;
 
+  // Pagina fissa: nessuno scorrimento, i pulsanti di paginazione sono sempre visibili in fondo.
   radice.innerHTML = `
+    <div class="schermo-home">
     <header class="barra">
       <span id="indicatore" class="indicatore">…</span>
       <button class="icona-btn" data-azione="impostazioni" aria-label="Impostazioni">${ICONE.ingranaggio}</button>
@@ -62,13 +63,16 @@ export function mostra(radice, { stato, vai }) {
         .join('')}
     </nav>
 
-    ${stato.esempi ? '<p class="banner-esempi">Queste sono idee d\'esempio: spariscono appena salvi la tua prima idea.</p>' : ''}
+    ${stato.esempi ? '<p class="banner-esempi">Idee d\'esempio: spariscono con la tua prima idea.</p>' : ''}
     <div class="riga-titolo"><span>Le tue idee</span><span>Pagina ${p.numero} di ${p.totalePagine}</span></div>
-    ${p.elementi.length ? `<ul class="lista">${p.elementi.map(schedaIdea).join('')}</ul>` : `<p class="vuota">${VUOTE[stato.scheda]}</p>`}
+    <div class="area-lista">
+      ${p.elementi.length ? `<ul class="lista">${p.elementi.map(schedaIdea).join('')}</ul>` : `<p class="vuota">${VUOTE[stato.scheda]}</p>`}
+    </div>
 
     <div class="paginazione">
       <button class="pillola grigia" data-pagina="-1" ${p.numero === 1 ? 'disabled' : ''}>Più recenti</button>
       <button class="pillola grigia" data-pagina="1" ${p.numero === p.totalePagine ? 'disabled' : ''}>Meno recenti</button>
+    </div>
     </div>
   `;
 

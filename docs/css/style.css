@@ -138,6 +138,30 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: rgba(186, 117, 23, .15); color: #efb563; border-radius: 10px; padding: 10px 12px; margin-top: 12px;
   font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
+/* Home a pagina fissa: la lista occupa lo spazio che resta, i pulsanti restano in fondo */
+.schermo-home {
+  display: flex; flex-direction: column;
+  height: calc(100vh - 36px);
+  height: calc(100dvh - 36px - env(safe-area-inset-bottom));
+}
+.schermo-home > * { flex-shrink: 0; }
+.schermo-home .area-lista { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.schermo-home .paginazione { margin-top: 8px; }
+.schermo-home .scheda-idea { padding: 8px; margin-bottom: 8px; align-items: center; }
+.schermo-home .quadro { width: 56px; height: 56px; }
+.schermo-home .quadro svg { width: 24px; height: 24px; }
+.schermo-home .badge { margin-top: 0; }
+.riga-stato { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.schermo-home .banner-esempi { margin-bottom: 6px; padding: 6px 10px; }
+.schermo-home .riga-titolo { margin-bottom: 6px; }
+/* Schermi bassi (o con le barre del browser): microfono più piccolo, niente sottotitolo */
+@media (max-height: 780px) {
+  .schermo-home .occhio { width: 140px; height: 88px; margin-top: 4px; }
+  .schermo-home .etichetta-occhio { margin-top: 6px; font-size: 18px; }
+  .schermo-home .sottotitolo { display: none; }
+  .schermo-home .riga-input { margin: 10px 0 12px; }
+}
+
 /* Impaginazione da chat: la pagina è ferma, scorre solo l'elenco dei messaggi */
 .schermo-chat {
   display: flex; flex-direction: column;

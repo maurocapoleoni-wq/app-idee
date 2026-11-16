@@ -2,7 +2,7 @@
 // Le chiamate alle API (GitHub, Anthropic, YouTube) non passano mai dalla cache.
 // Aumentare VERSIONE a ogni rilascio per aggiornare la cache sui telefoni.
 
-const VERSIONE = 'idee-v6';
+const VERSIONE = 'idee-v7';
 const FILE_APP = [
   './',
   './index.html',

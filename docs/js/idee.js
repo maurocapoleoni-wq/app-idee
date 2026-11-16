@@ -150,7 +150,8 @@ export function ordinaPerRecenti(idee) {
   return [...idee].sort((a, b) => b.aggiornata.localeCompare(a.aggiornata));
 }
 
-export function pagina(lista, numero, perPagina = 4) {
+// 3 per pagina: con 4 la home sul telefono scorreva e i pulsanti finivano fuori schermo.
+export function pagina(lista, numero, perPagina = 3) {
   const totalePagine = Math.max(1, Math.ceil(lista.length / perPagina));
   const n = Math.min(Math.max(1, Math.trunc(numero) || 1), totalePagine);
   return {

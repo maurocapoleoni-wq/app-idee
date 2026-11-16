@@ -41,5 +41,8 @@ All'avvio, al ritorno della rete e dopo "Verifica GitHub", il telefono legge ogn
 ## 2026-11-16 · passo 3 — Migliorie: bozza sul telefono, commit al salvataggio
 La conversazione sulla miglioria resta sul telefono (`bozzaMiglioria`) finché non si preme "Salva miglioria": solo allora nascono la versione nuova e il file `migliorie/vN-slug.md`, con descrizione e conversazione. Le migliorie arrivate dalla cassetta non vengono riscritte dal telefono.
 
+## 2026-11-16 · interfaccia — Pagine ferme, 3 idee per pagina
+Richiesta dell'utente dopo le prove sul telefono (cambia PROGETTO.md, che diceva 4). La home non scorre mai: con 4 idee i pulsanti "Più recenti / Meno recenti" finivano fuori schermo. In conversazione e miglioria il microfono resta fisso in alto e i messaggi scorrono sotto, il più recente in cima: un microfono che si sposta mentre si parla confonde. Data e stato stanno sulla stessa riga della scheda; sotto 780 px d'altezza microfono più piccolo e niente sottotitolo.
+
 ## 2026-11-16 · hook — Guardrail in Node, registrati solo in locale
 Gli script sono in Node perché girano allo stesso modo su Windows e Node c'è già. La registrazione sta in `settings.local.json`, quindi non finisce nel repo pubblico. L'hook della regola 6 sta invece nell'intestazione della skill `imposta-idee`: la skill gira da cartelle diverse da questo progetto e un hook di progetto non la coprirebbe. Dettagli in `.claude/HOOKS_DECISIONS.md`.
