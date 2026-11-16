@@ -24,7 +24,7 @@ export function collegaDettatura({ mic, etichetta, campo, form, chiaveBozza, lib
 
   function avvia() {
     if (!voceSupportata()) {
-      onAvviso('Questo browser non supporta il microfono: scrivi qui sotto (su Android usa Chrome).');
+      onAvviso('Questo browser non supporta il microfono dell\'app: scrivi qui sotto, oppure detta con il microfono della tastiera.');
       return;
     }
     globalThis.speechSynthesis?.cancel();
